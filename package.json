@@ -1,0 +1,30 @@
+{
+  "name": "oxyl-sharder",
+  "version": "1.0.0",
+  "description": "Sharding handler for Oxyl",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxylbot/sharder.git"
+  },
+  "keywords": [
+    "oxyl",
+    "discord",
+    "shard",
+    "microservice"
+  ],
+  "author": "minemidnight",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/oxylbot/sharder/issues"
+  },
+  "homepage": "https://github.com/oxylbot/sharder#readme",
+  "dependencies": {
+    "superagent": "^3.8.3",
+    "ws": "^6.0.0"
+  }
+}
