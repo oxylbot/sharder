@@ -1,5 +1,5 @@
 const config = require("../config");
-const constants = require("./constants");
+const { REST: constants } = require("./constants");
 const superagent = require("superagent");
 
 class Request {
@@ -34,7 +34,7 @@ class Request {
 
 	async then(success, failure) {
 		try {
-			const { body } = await this.request.set("Authorization", config.token);
+			const { body } = await this.request.set("Authorization", `Bot ${config.token}`);
 			success(body);
 		} catch(err) {
 			failure(err);
