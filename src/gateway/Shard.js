@@ -17,16 +17,17 @@ class Shard extends EventEmitter {
 		this.reset();
 	}
 
-	reset() {
+	reset(reconnect = false) {
 		this.latency = 0;
-		this.user = null;
-		this.ready = false;
-		this.status = "disconnected";
+		this.user = reconnect ? this.user : null;
+		this.status = reconnect ? "resuming" : "disconnected";
 
-		this.sessionID = null;
+		this.sessionID = reconnect ? this.sessionID : null;
+		this.lastSequence = reconnect ? this.lastSequence : null;
 		this.lastSentHeartbeat = null;
+
+		if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 		this.heartbeatInterval = null;
-		this.lastSequence = null;
 
 		if(this.compressionHandler) this.compressionHandler.kill();
 		this.compressionHandler = new CompressionHandler();
@@ -59,10 +60,115 @@ class Shard extends EventEmitter {
 		switch(packet.op) {
 			case constants.OPCODES.DISPATCH: {
 				switch(packet.t) {
+					case "RESUMED": {
+						this.status = "ready";
+
+						break;
+					}
+
 					case "READY": {
 						this.emit("ready");
+
+						this.status = "ready";
 						this.user = packet.d.user;
 						this.sessionID = packet.d.session_id;
+
+						break;
+					}
+
+					case "GUILD_MEMBER_ADD": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_MEMBER_REMOVE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_MEMBER_UPDATE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_ROLE_CREATE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_ROLE_UPDATE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_ROLE_DELETE": {
+						// TODO
+
+						break;
+					}
+
+					case "MESSAGE_CREATE": {
+						// TODO
+
+						break;
+					}
+
+					case "USER_UPDATE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_BAN_ADD": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_BAN_REMOVE": {
+						// TODO
+
+						break;
+					}
+
+					case "GUILD_CREATE": {
+						// TODO: cache
+
+						break;
+					}
+
+					case "GUILD_UPDATE": {
+						// TODO: cache
+
+						break;
+					}
+
+					case "GUILD_DELETE": {
+						if(packet.d.unavailable) return;
+						// TODO: cache
+
+						break;
+					}
+
+					case "CHANNEL_DELETE": {
+						// TODO: cache
+
+						break;
+					}
+
+					case "CHANNEL_UPDATE": {
+						// TODO: cache
+
+						break;
+					}
+
+					case "CHANNEL_CREATE": {
+						// TODO: cache
 
 						break;
 					}
@@ -87,8 +193,21 @@ class Shard extends EventEmitter {
 				this.sessionID = null;
 
 				this.identify();
-
 				break;
+			}
+
+			case constants.OPCODES.HEARTBEAT: {
+				this.heartbeat();
+				break;
+			}
+
+			case constants.OPCODES.RECONNECT: {
+				this.reset(true);
+				break;
+			}
+
+			case constants.OPCODES.HEARTBEAT_ACK: {
+				this.latency = Date.now() - this.lastSentHeartbeat;
 			}
 		}
 	}
