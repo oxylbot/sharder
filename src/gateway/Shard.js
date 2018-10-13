@@ -1,3 +1,4 @@
+const cacheConverter = require("./cacheConverter");
 const CompressionHandler = require("./CompressionHandler");
 const config = require("../config");
 const { GATEWAY: constants } = require("../constants");
@@ -5,8 +6,10 @@ const EventEmitter = require("events");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
-	constructor(url, shard, totalShards) {
+	constructor(gateway, url, shard, totalShards) {
 		super();
+
+		this.gateway = gateway;
 
 		url += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
 		this.url = url;
@@ -77,37 +80,51 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_ADD": {
-						// TODO
+						this.gateway.cache("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						// TODO
+						this.gateway.request()
+							.discord()
+							.guild(packet.d.guild_id)
+							.members()
+							.get(packet.d.user.id)
+							.delete()
+							.run();
 
 						break;
 					}
 
 					case "GUILD_MEMBER_UPDATE": {
-						// TODO
+						this.gateway.cache("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_ROLE_CREATE": {
-						// TODO
+						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
+						this.gateway.cache("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_UPDATE": {
-						// TODO
+						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
+						this.gateway.cache("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						// TODO
+						this.gateway.request()
+							.discord()
+							.guild(packet.d.guild_id)
+							.roles()
+							.get(packet.d.role_id)
+							.delete()
+							.run();
 
 						break;
 					}
@@ -119,7 +136,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "USER_UPDATE": {
-						// TODO
+						this.gateway.cache("user", cacheConverter.user(packet.d));
 
 						break;
 					}
@@ -137,38 +154,64 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_CREATE": {
-						// TODO: cache
+						this.gateway.cache("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_UPDATE": {
-						// TODO: cache
+						this.gateway.cache("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						// TODO: cache
+						this.gateway.request()
+							.discord()
+							.guild(packet.d.id)
+							.delete()
+							.run();
 
 						break;
 					}
 
 					case "CHANNEL_DELETE": {
-						// TODO: cache
+						this.gateway.request()
+							.discord()
+							.guild(packet.d.guild_id)
+							.channels()
+							.get(packet.d.id)
+							.delete()
+							.run();
 
 						break;
 					}
 
 					case "CHANNEL_UPDATE": {
-						// TODO: cache
+						this.gateway.cache("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "CHANNEL_CREATE": {
-						// TODO: cache
+						this.gateway.cache("channel", cacheConverter.channel(packet.d));
+
+						break;
+					}
+
+					case "VOICE_STATE_UPDATE": {
+						if(!packet.d.channel_id) {
+							this.gateway.request()
+								.discord()
+								.guild(packet.d.guild_id)
+								.voiceStates()
+								.get(packet.d.user_id)
+								.delete()
+								.run();
+						} else {
+							this.gateway.cache("voiceState", cacheConverter.voiceState(packet.d));
+						}
 
 						break;
 					}

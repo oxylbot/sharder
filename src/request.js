@@ -2,39 +2,79 @@ const config = require("../config");
 const { REST: constants } = require("./constants");
 const superagent = require("superagent");
 
+class Term {
+	constructor(request, methods = []) {
+		this.request = request;
+
+		methods.forEach(method => {
+			if(typeof method === "object") {
+				this[method.use] = (...args) => {
+					request.complete = false;
+					return request[method.real](...args);
+				};
+			} else {
+				this[method] = (...args) => {
+					request.complete = false;
+					return request[method](...args);
+				};
+			}
+		});
+	}
+
+	run() {
+		return this.request.run();
+	}
+
+	then(...args) {
+		this.request.then(...args);
+	}
+}
+
 class Request {
 	constructor() {
-		this.base = `${constants.BASE_URL}/v${constants.VERSION}`;
+		this.url = `${constants.BASE_URL}/v${constants.VERSION}`;
+		this.token = config.token;
 		this.request = superagent;
+		this.method = "get";
+		this.complete = false;
+
+		return new Term(this, ["gateway"]);
 	}
 
-	get(path) {
-		this.request.get(this.base + path);
+	addPath(...paths) {
+		this.url += `/${paths.join("/")}`;
 	}
 
-	post(path) {
-		this.request.post(this.base + path);
+	setMethod(method) {
+		this.method = method;
 	}
 
-	put(path) {
-		this.request.put(this.base + path);
+	gateway() {
+		this.addPath("gateway");
+		this.complete = true;
+
+		return new Term(this, [{
+			use: "bot",
+			real: "gatewayBot"
+		}]);
 	}
 
-	patch(path) {
-		this.request.patch(this.base + path);
+	gatewayBot() {
+		this.addPath("bot");
+		this.complete = true;
+
+		return new Term(this);
 	}
 
-	delete(path) {
-		this.request.delete(this.base + path);
-	}
-
-	send(body) {
-		this.request.send(body);
+	run() {
+		return new Promise((resolve, reject) => this.then(resolve, reject));
 	}
 
 	async then(success, failure) {
+		if(!this.complete) throw new Error("Cannot execute request if it is not valid");
+
 		try {
-			const { body } = await this.request.set("Authorization", `Bot ${config.token}`);
+			const { body } = await this.request[this.method](this.url).set("Authorization", `Bot ${this.token}`);
 			success(body);
 		} catch(err) {
 			failure(err);
