@@ -641,10 +641,23 @@ class Request {
 		this.complete = true;
 
 		return new Term(this, [{
+			use: "create",
+			real: "createGuild"
+		}, {
 			use: "get",
 			real: "getGuild"
 		}]);
 	}
+
+	createGuild(id) {
+		if(!id) return new Error("ID must be defined for guilds().create(id)");
+
+		this.setMethod("post");
+		this.complete = true;
+
+		return new Term(this);
+	}
+
 
 	getGuild(id) {
 		if(!id) throw new Error("ID must be defined for guilds().get(id)");
@@ -1222,7 +1235,6 @@ class Request {
 		this.addPath(id);
 		this.complete = true;
 
-		// TODO: these 
 		return new Term(this, [{
 			use: "nick",
 			real: "setMemberNickname"
@@ -1239,6 +1251,68 @@ class Request {
 			use: "move",
 			real: "setMemberChannel"
 		}]);
+	}
+
+	setMemberNickname(nick) {
+		if(typeof nick === "undefined") {
+			throw new Error("Nick must be a string or null for guilds().get(id).members().get(id).nick(nick)");
+		} else if(nick.length >= 32) {
+			throw new Error("Nick must be few than 32 characters for guilds().get(id).members().get(id).nick(nick)");
+		}
+
+		this.setMethod("patch");
+		this.body.nick = nick;
+		this.complete = true;
+
+		return new Term(this);
+	}
+
+	guildMemberRoles(roles) {
+		if(typeof roles === "undefined" || !Array.isArray(roles)) {
+			throw new Error("Roles must be an array in guilds().get(id).members().get(id).roles(roles)");
+		}
+
+		this.setMethod("patch");
+		this.body.roles = roles;
+		this.complete = true;
+
+		return new Term(this);
+	}
+
+	setMemberMute(mute) {
+		if(typeof mute === "undefined" || typeof mute !== "boolean") {
+			throw new Error("Mute must be a boolean in guilds().get(id).members().get(id).mute(mute)");
+		}
+
+		this.setMethod("patch");
+		this.body.mute = mute;
+		this.complete = true;
+
+		return new Term(this);
+	}
+
+	setMemberDeaf(deaf) {
+		if(typeof deaf === "undefined" || typeof deaf !== "boolean") {
+			throw new Error("Deaf must be a boolean in guilds().get(id).members().get(id).deaf(deaf)");
+		}
+
+		this.setMethod("patch");
+		this.body.deaf = deaf;
+		this.complete = true;
+
+		return new Term(this);
+	}
+
+	setMemberChannel(channel) {
+		if(typeof channel === "undefined" || typeof channel !== "string") {
+			throw new Error("Channel must be a string in guilds().get(id).members().get(id).move(channel)");
+		}
+
+		this.setMethod("patch");
+		this.body.channel_id = channel;
+		this.complete = true;
+
+		return new Term(this);
 	}
 
 	createChannel({ name, type, topic, bitrate, userLimit, ratelimit, overwrites, parentID, nsfw } = {}) {
