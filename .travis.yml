@@ -1,0 +1,31 @@
+sudo: required
+
+services:
+ - docker
+
+language: node_js
+node_js:
+ - "11.0.0"
+cache: npm
+
+git:
+  depth: 3
+
+env:
+ - NODE_ENV=development
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y build-essential
+
+install:
+ - npm install
+
+script:
+ - eslint .
+
+after_success:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+  - docker pull oxyl/gateway
+  - docker build .
+  - docker push oxyl/gateway
