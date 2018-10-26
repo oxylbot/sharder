@@ -1268,7 +1268,7 @@ class Request {
 	}
 
 	guildMemberRoles(roles) {
-		if(typeof roles === "undefined" || !Array.isArray(roles)) {
+		if(!Array.isArray(roles)) {
 			throw new Error("Roles must be an array in guilds().get(id).members().get(id).roles(roles)");
 		}
 
@@ -1280,7 +1280,7 @@ class Request {
 	}
 
 	setMemberMute(mute) {
-		if(typeof mute === "undefined" || typeof mute !== "boolean") {
+		if(typeof mute !== "boolean") {
 			throw new Error("Mute must be a boolean in guilds().get(id).members().get(id).mute(mute)");
 		}
 
@@ -1292,7 +1292,7 @@ class Request {
 	}
 
 	setMemberDeaf(deaf) {
-		if(typeof deaf === "undefined" || typeof deaf !== "boolean") {
+		if(typeof deaf !== "boolean") {
 			throw new Error("Deaf must be a boolean in guilds().get(id).members().get(id).deaf(deaf)");
 		}
 
@@ -1304,8 +1304,8 @@ class Request {
 	}
 
 	setMemberChannel(channel) {
-		if(typeof channel === "undefined" || typeof channel !== "string") {
-			throw new Error("Channel must be a string in guilds().get(id).members().get(id).move(channel)");
+		if(typeof channel !== "string") {
+			throw new Error("Channel ID must be a string in guilds().get(id).members().get(id).move(channelID)");
 		}
 
 		this.setMethod("patch");
