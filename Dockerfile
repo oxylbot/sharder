@@ -1,4 +1,7 @@
-FROM debian:jessie
+FROM eugenmayer/make
+FROM gcc
+FROM python:2.7-slim
+
 FROM node:10.12.0-jessie
 
 ARG NODE_ENV
