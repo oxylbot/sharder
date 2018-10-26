@@ -26,6 +26,6 @@ script:
 
 after_success:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker pull oxyl/sharder
-  - docker build .
-  - docker push oxyl/sharder
+  - docker pull oxyl/sharder:latest
+  - docker build -t oxyl/sharder:latest .
+  - docker push oxyl/sharder:latest
