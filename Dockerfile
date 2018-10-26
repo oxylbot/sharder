@@ -8,7 +8,7 @@ COPY . /app
 
 WORKDIR /app
 
-RUN sudo apt-get update && sudo apt-get install -y build-essential
+RUN apt-get update && apt-get install -y build-essential
 
 RUN npm install --production
 
