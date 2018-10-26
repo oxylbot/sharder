@@ -12,4 +12,4 @@ RUN sudo apt-get update && sudo apt-get install -y build-essential
 
 RUN npm install --production
 
-CMD npm start
+CMD ["npm", "start"]
