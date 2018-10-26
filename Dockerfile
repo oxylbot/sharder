@@ -8,9 +8,9 @@ ARG NODE_ENV
 
 ENV NODE_ENV=${NODE_ENV}
 
-COPY . /home/app
+COPY . /app
 
-WORKDIR /home/app
+WORKDIR /app
 
 RUN npm install --production
 
