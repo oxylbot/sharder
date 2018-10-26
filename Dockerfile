@@ -1,4 +1,4 @@
-FROM debian:stretch
+FROM debian:jessie
 FROM node:10.12.0-jessie
 
 ARG NODE_ENV
