@@ -6,10 +6,8 @@ const EventEmitter = require("events");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
-	constructor(gateway, url, shard, totalShards) {
+	constructor(url, shard, totalShards) {
 		super();
-
-		this.gateway = gateway;
 
 		url += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
 		this.url = url;
@@ -36,17 +34,19 @@ class Shard extends EventEmitter {
 		this.compressionHandler = new CompressionHandler();
 		this.compressionHandler.on("message", this.packet);
 
-		if(this.ws) {
-			this.ws.terminate();
-			this.ws.removeAllListeners();
-		}
+		if(this.ws) this.close();
 
 		this.ws = new WebSocket(this.url);
 		this.ws.on("message", this.compressionHandler.push.bind(this.compressionHandler));
 	}
 
+	close() {
+		this.ws.close(1000);
+		this.ws.removeAllListeners();
+	}
+
 	async send(data) {
-		// TODO: check if websocket is open and add it to a queue, most likely a queue class that can double for REST api
+		// TODO: check if websocket is open and add it to a queue, most likely a queue class
 		this.ws.send(this.compressionHandler.prepareForSending(data));
 	}
 
@@ -80,13 +80,13 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_ADD": {
-						this.gateway.cache("member", cacheConverter.member(packet.d));
+						this.cache("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						this.gateway.request()
+						this.request()
 							.discord()
 							.guild(packet.d.guild_id)
 							.members()
@@ -98,27 +98,27 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_UPDATE": {
-						this.gateway.cache("member", cacheConverter.member(packet.d));
+						this.cache("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_ROLE_CREATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.gateway.cache("role", cacheConverter.role(role));
+						this.cache("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_UPDATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.gateway.cache("role", cacheConverter.role(role));
+						this.cache("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						this.gateway.request()
+						this.request()
 							.discord()
 							.guild(packet.d.guild_id)
 							.roles()
@@ -136,7 +136,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "USER_UPDATE": {
-						this.gateway.cache("user", cacheConverter.user(packet.d));
+						this.cache("user", cacheConverter.user(packet.d));
 
 						break;
 					}
@@ -154,20 +154,20 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_CREATE": {
-						this.gateway.cache("guild", cacheConverter.guild(packet.d));
+						this.cache("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_UPDATE": {
-						this.gateway.cache("guild", cacheConverter.guild(packet.d));
+						this.cache("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						this.gateway.request()
+						this.request()
 							.discord()
 							.guild(packet.d.id)
 							.delete()
@@ -177,7 +177,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "CHANNEL_DELETE": {
-						this.gateway.request()
+						this.request()
 							.discord()
 							.guild(packet.d.guild_id)
 							.channels()
@@ -189,20 +189,20 @@ class Shard extends EventEmitter {
 					}
 
 					case "CHANNEL_UPDATE": {
-						this.gateway.cache("channel", cacheConverter.channel(packet.d));
+						this.cache("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "CHANNEL_CREATE": {
-						this.gateway.cache("channel", cacheConverter.channel(packet.d));
+						this.cache("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
-							this.gateway.request()
+							this.request()
 								.discord()
 								.guild(packet.d.guild_id)
 								.voiceStates()
@@ -210,7 +210,7 @@ class Shard extends EventEmitter {
 								.delete()
 								.run();
 						} else {
-							this.gateway.cache("voiceState", cacheConverter.voiceState(packet.d));
+							this.cache("voiceState", cacheConverter.voiceState(packet.d));
 						}
 
 						break;

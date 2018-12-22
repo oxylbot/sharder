@@ -9,10 +9,11 @@ class CompressionHandler extends EventEmitter {
 		this.unzip = zlib.createUnzip({
 			flush: zlib.constants.Z_SYNC_FLUSH,
 			chunkSize: 128 * 1024
-		}).on(data => this.zlib.chunks.push(data));
+		}).on(data => this.chunks.push(data));
 
 		this.flushing = false;
 		this.queue = [];
+		this.chunks = [];
 	}
 
 	kill() {
@@ -34,7 +35,7 @@ class CompressionHandler extends EventEmitter {
 			this.queue.push(data);
 		} else {
 			this.unzip.write(data);
-			if(this.endOfStream(data)) this.zlib.flush();
+			if(this.endOfStream(data)) this.flush();
 		}
 	}
 
@@ -44,20 +45,20 @@ class CompressionHandler extends EventEmitter {
 	}
 
 	flushed() {
-		this.zlib.flushing = false;
-		if(!this.zlib.chunks.length) return;
+		this.flushing = false;
+		if(!this.chunks.length) return;
 
 		let buffer;
-		if(this.zlib.chunks.length > 1) buffer = Buffer.concat(this.zlib.chunks);
-		else buffer = buffer[0];
-		this.zlib.chunks = [];
+		if(this.chunks.length > 1) buffer = Buffer.concat(this.chunks);
+		else [buffer] = buffer;
+		this.chunks = [];
 
-		while(this.zlib.incoming.length) {
-			const data = this.zlib.incoming.shift();
-			this.zlib.unzip.write(data);
+		while(this.incoming.length) {
+			const data = this.incoming.shift();
+			this.unzip.write(data);
 
 			if(this.endOfStream(data)) {
-				this.zlib.flush();
+				this.flush();
 				break;
 			}
 		}

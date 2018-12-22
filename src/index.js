@@ -1,20 +1,31 @@
-const Gateway = require("oxyl-boilerplate");
-const Shard = require("./gateway/Shard");
-const request = require("./request");
+const fs = require("fs").promises;
+const zmq = require("zeromq");
 
-const gateway = new Gateway();
+const Shard = require("./gateway/Shard");
+
 const shards = new Map();
+const socket = zmq.socket("pull");
 
 async function init() {
-	const { gateway: url, shards: totalShards } = await request().gateway().bot();
+	const address = await fs.readFile("/etc/secret-volume/zeromq-address", "utf8");
+	socket.connect(address);
 
-	gateway.once("shards", shardList => {
-		shardList.forEach(shardID => {
-			const shard = new Shard(gateway, url, shardID, totalShards);
-			shards.set(shardID, shard);
-			gateway.addShard(shard);
-		});
+	// TODO: get shards, gateway url, and total shards
+	const totalShards = 0;
+	const url = "";
+	const shardList = [];
+
+	shardList.forEach(shardID => {
+		const shard = new Shard(url, shardID, totalShards);
+		shards.set(shardID, shard);
 	});
 }
 
 init();
+
+process.on("SIGTERM", () => {
+	socket.close();
+	for(const shard of shards) shard.close();
+
+	process.exit(0);
+});

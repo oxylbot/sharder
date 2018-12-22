@@ -25,12 +25,13 @@
   "homepage": "https://github.com/oxylbot/sharder#readme",
   "dependencies": {
     "erlpack": "^0.1.2",
-    "oxyl-boilerplate": "0.0.1",
+    "protobufjs": "^6.8.8",
     "superagent": "^3.8.3",
-    "ws": "^6.0.0"
+    "ws": "^6.1.2",
+    "zeromq": "^5.1.0"
   },
   "devDependencies": {
-    "eslint": "^5.8.0",
+    "eslint": "^5.10.0",
     "eslint-config-recommended": "^4.0.0"
   }
 }
