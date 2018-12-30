@@ -9,20 +9,32 @@ class CacheSocket {
 
 		this.proto = {};
 
-		protobuf.load(path.resolve(__dirname, "..", "..", "Cache.proto")).then(root => {
-			this.proto.CacheRequest = root.lookUpType("CacheRequest");
-			this.proto.Member = root.lookUpType("Member");
-			this.proto.Role = root.lookUpType("Role");
-			this.proto.User = root.lookUpType("User");
-			this.proto.Channel = root.lookUpType("Channel");
-			this.proto.Overwrite = root.lookUpType("Overwrite");
-			this.proto.Guild = root.lookUpType("Guild");
-			this.proto.VoiceState = root.lookUpType("VoiceState");
+		protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Cache.proto")).then(root => {
+			this.proto.CacheRequest = root.lookupType("CacheRequest");
+			this.proto.requests = {
+				Member: root.lookupType("Member"),
+				Role: root.lookupType("Role"),
+				User: root.lookupType("User"),
+				Channel: root.lookupType("Channel"),
+				Overwrite: root.lookupType("Overwrite"),
+				Guild: root.lookupType("Guild"),
+				VoiceState: root.lookupType("VoiceState")
+			};
 		});
 	}
 
-	send(message) {
-		this.socket.send(message);
+	send(type, message) {
+		const request = this.proto.requests[type.charAt(1).toUpperCase() + type.substring(1)];
+		if(!request) throw new TypeError(`Given ${type} but no cache request with that type was found`);
+
+		const verifyError = request.verify(message);
+		if(verifyError) throw new Error(verifyError);
+
+		const buffer = this.proto.CacheRequest
+			.encode({ [type]: message })
+			.finish();
+
+		this.socket.send(buffer);
 	}
 
 	close() {

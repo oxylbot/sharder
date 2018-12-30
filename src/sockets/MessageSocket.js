@@ -9,8 +9,8 @@ class MessageSocket {
 
 		this.proto = {};
 
-		protobuf.load(path.resolve(__dirname, "..", "..", "Message.proto")).then(root => {
-			this.proto.DiscordMessage = root.lookUpType("DiscordMessage");
+		protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Message.proto")).then(root => {
+			this.proto.DiscordMessage = root.lookupType("DiscordMessage");
 		});
 	}
 
@@ -18,7 +18,10 @@ class MessageSocket {
 		const verifyError = this.proto.DiscordMessage.verify(message);
 		if(verifyError) throw new Error(verifyError);
 
-		const buffer = this.proto.DiscordMessage.encode(message).finish();
+		const buffer = this.proto.DiscordMessage
+			.encode(this.proto.DiscordMessage.fromObject(message))
+			.finish();
+
 		this.socket.send(buffer);
 	}
 

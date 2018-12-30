@@ -8,7 +8,7 @@ message CacheRequest {
 		Channel channel = 4;
 		Overwrite overwrite = 5;
 		Guild guild = 6;
-		VoiceState voice = 7;
+		VoiceState voice_state = 7;
 	}
 }
 

@@ -24,6 +24,7 @@ class Shard extends EventEmitter {
 		this.latency = 0;
 		this.user = reconnect ? this.user : null;
 		this.status = reconnect ? "resuming" : "disconnected";
+		this.messageQueue = [];
 
 		this.sessionID = reconnect ? this.sessionID : null;
 		this.lastSequence = reconnect ? this.lastSequence : null;
@@ -48,8 +49,15 @@ class Shard extends EventEmitter {
 	}
 
 	async send(data) {
-		// TODO: check if websocket is open and add it to a queue, most likely a queue class
-		this.ws.send(this.compressionHandler.prepareForSending(data));
+		if(this.status !== "ready") this.messageQueue.push(data);
+		else this.ws.send(this.compressionHandler.compress(data));
+	}
+
+	async clearMessageQueue() {
+		while(this.messageQueue.length) {
+			this.send(this.messageQueue.shift());
+			await new Promise(resolve => setTimeout(resolve, 500));
+		}
 	}
 
 	heartbeat() {
@@ -67,6 +75,7 @@ class Shard extends EventEmitter {
 				switch(packet.t) {
 					case "RESUMED": {
 						this.status = "ready";
+						this.clearMessageQueue();
 
 						break;
 					}
@@ -75,6 +84,7 @@ class Shard extends EventEmitter {
 						this.emit("ready");
 
 						this.status = "ready";
+						this.clearMessageQueue();
 						this.user = packet.d.user;
 						this.sessionID = packet.d.session_id;
 
@@ -82,7 +92,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_ADD": {
-						this.cache("member", cacheConverter.member(packet.d));
+						this.cacheSocket("member", cacheConverter.member(packet.d));
 
 						break;
 					}
@@ -100,21 +110,21 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_UPDATE": {
-						this.cache("member", cacheConverter.member(packet.d));
+						this.cacheSocket.send("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_ROLE_CREATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cache("role", cacheConverter.role(role));
+						this.cacheSocket.send("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_UPDATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cache("role", cacheConverter.role(role));
+						this.cacheSocket.send("role", cacheConverter.role(role));
 
 						break;
 					}
@@ -146,7 +156,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "USER_UPDATE": {
-						this.cache("user", cacheConverter.user(packet.d));
+						this.cacheSocket.send("user", cacheConverter.user(packet.d));
 
 						break;
 					}
@@ -164,13 +174,13 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_CREATE": {
-						this.cache("guild", cacheConverter.guild(packet.d));
+						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_UPDATE": {
-						this.cache("guild", cacheConverter.guild(packet.d));
+						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
@@ -199,13 +209,13 @@ class Shard extends EventEmitter {
 					}
 
 					case "CHANNEL_UPDATE": {
-						this.cache("channel", cacheConverter.channel(packet.d));
+						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "CHANNEL_CREATE": {
-						this.cache("channel", cacheConverter.channel(packet.d));
+						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
@@ -220,7 +230,7 @@ class Shard extends EventEmitter {
 								.delete()
 								.run();
 						} else {
-							this.cache("voiceState", cacheConverter.voiceState(packet.d));
+							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
 						}
 
 						break;

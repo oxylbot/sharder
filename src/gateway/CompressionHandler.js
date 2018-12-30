@@ -22,7 +22,7 @@ class CompressionHandler extends EventEmitter {
 		this.removeAllListeners();
 	}
 
-	prepareForSending(data) {
+	compress(data) {
 		return erlpack.pack(data);
 	}
 
