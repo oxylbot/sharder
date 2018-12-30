@@ -1,8 +1,6 @@
-FROM eugenmayer/make
-FROM gcc
-FROM python:2.7-slim
+FROM node:11.6.0-alpine
 
-FROM node:10.12.0-jessie
+RUN apk add --no-cache build-base python python-dev
 
 ARG NODE_ENV
 

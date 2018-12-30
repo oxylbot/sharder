@@ -11,8 +11,8 @@ const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
 
 async function init() {
 	const token = await fs.readFile("/etc/secrets/token.txt", "utf8");
-	const cacheProto = await protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Cache.proto"));
-	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Cache.proto"));
+	const cacheProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "Cache.proto"));
+	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "Message.proto"));
 
 	cacheSocket.start(cacheProto);
 	messageSocket.start(messageProto);

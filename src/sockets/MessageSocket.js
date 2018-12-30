@@ -14,12 +14,12 @@ class MessageSocket {
 	}
 
 	send(message) {
-		const discordMesage = this.proto.DiscordMesage;
+		const discordMessage = this.proto.DiscordMessage;
 
-		const verifyError = discordMesage.verify(message);
+		const verifyError = discordMessage.verify(message);
 		if(verifyError) throw new Error(verifyError);
 
-		const buffer = discordMesage.encode(message).finish();
+		const buffer = discordMessage.encode(message).finish();
 
 		this.socket.send(buffer);
 	}
