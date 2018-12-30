@@ -1,19 +1,21 @@
 const cacheConverter = require("./cacheConverter");
 const CompressionHandler = require("./CompressionHandler");
-const config = require("../config");
 const { GATEWAY: constants } = require("../constants");
 const EventEmitter = require("events");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
-	constructor(url, shard, totalShards) {
+	constructor({ gatewayURL, shardID, totalShards, messageSocket, cacheSocket, token }) {
 		super();
 
-		url += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
-		this.url = url;
+		gatewayURL += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
+		this.url = gatewayURL;
 
-		this.id = shard;
+		this.token = token;
+		this.id = shardID;
 		this.totalShards = totalShards;
+		this.messageSocket = messageSocket;
+		this.cacheSocket = cacheSocket;
 
 		this.reset();
 	}
@@ -130,7 +132,15 @@ class Shard extends EventEmitter {
 					}
 
 					case "MESSAGE_CREATE": {
-						// TODO
+						if(packet.d.type === 0 && !packet.d.webhook_id && !packet.d.author.bot) {
+							this.messageSocket.send({
+								id:	packet.d.id,
+								channelID: packet.d.channel_id,
+								authorID: packet.d.author.id,
+								guildID: packet.d.guild_id,
+								content: packet.d.content
+							});
+						}
 
 						break;
 					}
@@ -258,7 +268,7 @@ class Shard extends EventEmitter {
 	resume() {
 		this.status = "resuming";
 		this.send({
-			token: config.token,
+			token: this.token,
 			session_id: this.sessionID,
 			seq: this.lastSequence
 		});
@@ -268,7 +278,7 @@ class Shard extends EventEmitter {
 		this.send({
 			op: constants.OPCODES.IDENTIFY,
 			d: {
-				token: config.token,
+				token: this.token,
 				properties: {
 					$os: process.platform,
 					$browser: "Oxyl",

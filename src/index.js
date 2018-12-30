@@ -1,30 +1,37 @@
 const fs = require("fs").promises;
-const zmq = require("zeromq");
-
+const CacheSocket = require("./sockets/CacheSocket");
+const MessageSocket = require("./sockets/MessageSocket");
 const Shard = require("./gateway/Shard");
 
 const shards = new Map();
-const socket = zmq.socket("pull");
+const cacheSocket = new CacheSocket(process.env.CACHE_SOCKET_ADDRESS);
+const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
 
 async function init() {
-	const address = await fs.readFile("/etc/secret-volume/zeromq-address", "utf8");
-	socket.connect(address);
+	const token = await fs.readFile("/etc/secret-volume/token", "utf8");
 
-	// TODO: get shards, gateway url, and total shards
-	const totalShards = 0;
-	const url = "";
-	const shardList = [];
+	process.env.SHARDS_TO_USE
+		.split(",")
+		.map(int => parseInt(int))
+		.forEach(shardID => {
+			const shard = new Shard({
+				gatewayURL: process.env.GATEWAY_URL,
+				shardID,
+				totalShards: parseInt(process.env.TOTAL_SHARDS),
+				messageSocket,
+				cacheSocket,
+				token
+			});
 
-	shardList.forEach(shardID => {
-		const shard = new Shard(url, shardID, totalShards);
-		shards.set(shardID, shard);
-	});
+			shards.set(shardID, shard);
+		});
 }
 
 init();
 
 process.on("SIGTERM", () => {
-	socket.close();
+	messageSocket.close();
+	cacheSocket.close();
 	for(const shard of shards) shard.close();
 
 	process.exit(0);
