@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+message CacheRequest {
+	oneof discord_type {
+		Member member = 1;
+		Role role = 2;
+		User user = 3;
+		Channel channel = 4;
+		Overwrite overwrite = 5;
+		Guild guild = 6;
+		VoiceState voice = 7;
+	}
+}
+
+message Member {
+	string id = 1;
+	string guild_id = 2;
+	string nickname = 3;
+	repeated string roles = 4;
+	uint64 joined_at = 5;
+	User user = 6;
+}
+
+message Role {
+	string id = 1;
+	string guild_id = 2;
+	string name = 3;
+	uint32 color = 4;
+	uint32 position = 5;
+	uint64 permission = 6;
+}
+
+message User {
+	string id = 1;
+	string username = 2;
+	string discriminator = 3;
+	string avatar = 4;
+	boolean bot = 5;
+}
+
+message Channel {
+	string id = 1;
+	string guild_id = 2;
+	uint32 type = 3;
+	uint32 position = 4;
+	string name = 5;
+	boolean nsfw = 6;
+	repeated Overwrite overwrites = 7;
+	uint32 user_limit = 8;
+	string parent_id = 9;
+}
+
+message Overwrite {
+	string id = 1;
+	string type = 2;
+	uint64 allow = 3;
+	uint64 deny = 4;
+}
+
+message Guild {
+	string id = 1;
+	string name = 2;
+	string icon = 3;
+	string owner_id = 4;
+	string region = 5;
+	repeated Role roles = 6;
+	uint32 member_count = 7;
+	repeated Member members = 8;
+	repeated VoiceState voice_states = 9;
+	repeated Channel channels = 10;
+}
+
+message VoiceState {
+	string guild_id = 1;
+	string user_id = 2;
+	string channel_id = 3;
+	boolean deaf = 4;
+	boolean mute = 5;
+	boolean self_deaf = 6;
+	boolean self_mute = 7;
+}

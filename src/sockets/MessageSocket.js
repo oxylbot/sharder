@@ -21,6 +21,10 @@ class MessageSocket {
 		const buffer = this.proto.DiscordMessage.encode(message).finish();
 		this.socket.send(buffer);
 	}
+
+	close() {
+		this.socket.close();
+	}
 }
 
 module.exports = MessageSocket;

@@ -8,7 +8,7 @@ const cacheSocket = new CacheSocket(process.env.CACHE_SOCKET_ADDRESS);
 const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
 
 async function init() {
-	const token = await fs.readFile("/etc/secret-volume/token", "utf8");
+	const token = await fs.readFile("/etc/secrets/token.txt", "utf8");
 
 	process.env.SHARDS_TO_USE
 		.split(",")
