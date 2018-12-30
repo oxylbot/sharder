@@ -1,26 +1,25 @@
-const path = require("path");
-const protobuf = require("protobufjs");
 const zmq = require("zeromq");
 
 class MessageSocket {
 	constructor(address) {
 		this.socket = zmq.socket("push");
-		this.socket.connect(address);
+		this.address = address;
 
-		this.proto = {};
+		this.proto = null;
+	}
 
-		protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Message.proto")).then(root => {
-			this.proto.DiscordMessage = root.lookupType("DiscordMessage");
-		});
+	start(proto) {
+		this.proto = proto;
+		this.socket.connect(this.address);
 	}
 
 	send(message) {
-		const verifyError = this.proto.DiscordMessage.verify(message);
+		const discordMesage = this.proto.DiscordMesage;
+
+		const verifyError = discordMesage.verify(message);
 		if(verifyError) throw new Error(verifyError);
 
-		const buffer = this.proto.DiscordMessage
-			.encode(this.proto.DiscordMessage.fromObject(message))
-			.finish();
+		const buffer = discordMesage.encode(message).finish();
 
 		this.socket.send(buffer);
 	}

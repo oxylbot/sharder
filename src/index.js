@@ -1,6 +1,8 @@
 const fs = require("fs").promises;
 const CacheSocket = require("./sockets/CacheSocket");
 const MessageSocket = require("./sockets/MessageSocket");
+const path = require("path");
+const protobuf = require("protobufjs");
 const Shard = require("./gateway/Shard");
 
 const shards = new Map();
@@ -9,6 +11,11 @@ const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
 
 async function init() {
 	const token = await fs.readFile("/etc/secrets/token.txt", "utf8");
+	const cacheProto = await protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Cache.proto"));
+	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "..", "protobuf", "Cache.proto"));
+
+	cacheSocket.start(cacheProto);
+	messageSocket.start(messageProto);
 
 	process.env.SHARDS_TO_USE
 		.split(",")
