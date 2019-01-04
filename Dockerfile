@@ -12,4 +12,4 @@ WORKDIR /app
 
 RUN npm install --production
 
-CMD ["npm", "start"]
+CMD ["node", "."]

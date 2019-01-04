@@ -1,11 +1,10 @@
 {
   "name": "oxyl-sharder",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Sharding handler for Oxyl",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ."
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -26,7 +25,6 @@
   "dependencies": {
     "erlpack": "^0.1.2",
     "protobufjs": "^6.8.8",
-    "superagent": "^4.0.0",
     "ws": "^6.1.2",
     "zeromq": "^5.1.0"
   },
