@@ -14,7 +14,7 @@ class MessageSocket {
 	}
 
 	send(message) {
-		const messageProto = this.proto.lookup("message");
+		const messageProto = this.proto.lookup("Message");
 
 		const verifyError = messageProto.verify(message);
 		if(verifyError) throw new Error(verifyError);
