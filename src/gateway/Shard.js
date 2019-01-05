@@ -35,7 +35,7 @@ class Shard extends EventEmitter {
 
 		if(this.compressionHandler) this.compressionHandler.kill();
 		this.compressionHandler = new CompressionHandler();
-		this.compressionHandler.on("message", this.packet);
+		this.compressionHandler.on("message", this.packet.bind(this));
 
 		if(this.ws) this.close();
 
@@ -53,7 +53,7 @@ class Shard extends EventEmitter {
 		else this.ws.send(this.compressionHandler.compress(data));
 	}
 
-	async clearMessageQueue() {
+	async emptyMessageQueue() {
 		while(this.messageQueue.length) {
 			this.send(this.messageQueue.shift());
 			await new Promise(resolve => setTimeout(resolve, 500));
@@ -75,7 +75,7 @@ class Shard extends EventEmitter {
 				switch(packet.t) {
 					case "RESUMED": {
 						this.status = "ready";
-						this.clearMessageQueue();
+						this.emptyMessageQueue();
 
 						break;
 					}
@@ -84,7 +84,7 @@ class Shard extends EventEmitter {
 						this.emit("ready");
 
 						this.status = "ready";
-						this.clearMessageQueue();
+						this.emptyMessageQueue();
 						this.user = packet.d.user;
 						this.sessionID = packet.d.session_id;
 
@@ -98,13 +98,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.members()
-							.get(packet.d.user.id)
-							.delete()
-							.run();
+						// TODO delete guilds/{packet.d.guild_id}/members/{packet.d.user.id}
 
 						break;
 					}
@@ -130,13 +124,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.roles()
-							.get(packet.d.role_id)
-							.delete()
-							.run();
+						// TODO delete guilds/{packet.d.guild_id}/roles/{packet.d.role_id}
 
 						break;
 					}
@@ -187,23 +175,13 @@ class Shard extends EventEmitter {
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						this.request()
-							.discord()
-							.guild(packet.d.id)
-							.delete()
-							.run();
+						// TODO delete guilds/{packet.d.guild_id}
 
 						break;
 					}
 
 					case "CHANNEL_DELETE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.channels()
-							.get(packet.d.id)
-							.delete()
-							.run();
+						// TODO delete guilds/{packet.d.guild_id}/channels/{packet.d.channel_id}
 
 						break;
 					}
@@ -222,13 +200,7 @@ class Shard extends EventEmitter {
 
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
-							this.request()
-								.discord()
-								.guild(packet.d.guild_id)
-								.voiceStates()
-								.get(packet.d.user_id)
-								.delete()
-								.run();
+							// TODO delete guilds/{packet.d.guild_id}/voicestates/{packet.d.user_id}
 						} else {
 							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
 						}
