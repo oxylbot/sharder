@@ -1,4 +1,3 @@
-const fs = require("fs").promises;
 const CacheSocket = require("./sockets/CacheSocket");
 const MessageSocket = require("./sockets/MessageSocket");
 const path = require("path");
@@ -10,9 +9,8 @@ const cacheSocket = new CacheSocket(process.env.CACHE_SOCKET_ADDRESS);
 const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
 
 async function init() {
-	const token = await fs.readFile("/etc/secrets/token.txt", "utf8");
 	const cacheProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "Cache.proto"));
-	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "Message.proto"));
+	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "DiscordMessage.proto"));
 
 	cacheSocket.start(cacheProto);
 	messageSocket.start(messageProto);
@@ -24,10 +22,10 @@ async function init() {
 			const shard = new Shard({
 				gatewayURL: process.env.GATEWAY_URL,
 				shardID,
-				totalShards: parseInt(process.env.TOTAL_SHARDS),
+				totalShards: +process.env.TOTAL_SHARDS,
 				messageSocket,
 				cacheSocket,
-				token
+				token: process.env.TOKEN
 			});
 
 			shards.set(shardID, shard);

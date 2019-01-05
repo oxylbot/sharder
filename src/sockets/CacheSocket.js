@@ -14,18 +14,16 @@ class CacheSocket {
 	}
 
 	send(type, message) {
-		if(type === "CacheRequest") throw new TypeError("Invalid cache type");
-		const request = this.proto[type.charAt(1).toUpperCase() + type.substring(1)];
-		if(!request) throw new TypeError(`Given ${type} but no cache request with that type was found`);
+		type = type.charAt(0).toUpperCase() + type.substring(1);
+		const typeProto = this.proto.lookup(type);
 
-		const verifyError = request.verify(message);
+		const verifyError = typeProto.verify(message);
 		if(verifyError) throw new Error(verifyError);
 
-		const buffer = this.proto.CacheRequest
-			.encode({ [type]: message })
-			.finish();
-
-		this.socket.send(buffer);
+		this.socket.send(this.proto.lookup("CacheRequest").encode({
+			type,
+			data: typeProto.encode(message).finish()
+		}).finish());
 	}
 
 	close() {

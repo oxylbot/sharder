@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+message Message {
+	required string id = 1;
+	required string channel_id = 2;
+	required string author_id = 3;
+	required string guild_id = 4;
+	required string content = 5;
+}

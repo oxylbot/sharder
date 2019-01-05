@@ -1,41 +1,33 @@
-syntax = "proto3";
+syntax = "proto2";
 
 message CacheRequest {
-	oneof discord_type {
-		Member member = 1;
-		Role role = 2;
-		User user = 3;
-		Channel channel = 4;
-		Overwrite overwrite = 5;
-		Guild guild = 6;
-		VoiceState voice_state = 7;
-	}
+	required string type = 1;
+	required bytes data = 2;
 }
 
 message Member {
-	string id = 1;
-	string guild_id = 2;
-	string nickname = 3;
+	required User user = 6;
+	required string guild_id = 2;
+	optional string nickname = 3;
 	repeated string roles = 4;
-	uint64 joined_at = 5;
-	User user = 6;
+	required string joined_at = 5;
 }
 
 message Role {
-	string id = 1;
-	string guild_id = 2;
-	string name = 3;
-	uint32 color = 4;
-	uint32 position = 5;
-	uint64 permission = 6;
+	required string id = 1;
+	required string guild_id = 2;
+	required string name = 3;
+	required uint32 color = 4;
+	required uint32 position = 5;
+	required uint64 permission = 6;
 }
 
 message User {
-	string id = 1;
-	string username = 2;
-	string discriminator = 3;
-	string avatar = 4;
-	boolean bot = 5;
+	required string id = 1;
+	required string username = 2;
+	required string discriminator = 3;
+	optional string avatar = 4;
+	required bool bot = 5;
 }
 
 message Channel {
