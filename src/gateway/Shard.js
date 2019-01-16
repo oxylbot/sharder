@@ -2,10 +2,11 @@ const cacheConverter = require("./cacheConverter");
 const CompressionHandler = require("./CompressionHandler");
 const { GATEWAY: constants } = require("../constants");
 const EventEmitter = require("events");
+const superagent = require("superagent");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
-	constructor({ gatewayURL, shardID, totalShards, messageSocket, cacheSocket, token }) {
+	constructor({ gatewayURL, shardID, shardCount, messageSocket, cacheSocket, token }) {
 		super();
 
 		gatewayURL += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
@@ -13,7 +14,7 @@ class Shard extends EventEmitter {
 
 		this.token = token;
 		this.id = shardID;
-		this.totalShards = totalShards;
+		this.shardCount = shardCount;
 		this.messageSocket = messageSocket;
 		this.cacheSocket = cacheSocket;
 
@@ -98,7 +99,8 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						// TODO delete guilds/{packet.d.guild_id}/members/{packet.d.user.id}
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/members/${packet.d.user.id}`);
 
 						break;
 					}
@@ -124,7 +126,8 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						// TODO delete guilds/{packet.d.guild_id}/roles/{packet.d.role_id}
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/roles/${packet.d.role.id}`);
 
 						break;
 					}
@@ -175,13 +178,14 @@ class Shard extends EventEmitter {
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						// TODO delete guilds/{packet.d.guild_id}
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}`);
 
 						break;
 					}
 
 					case "CHANNEL_DELETE": {
-						// TODO delete guilds/{packet.d.guild_id}/channels/{packet.d.channel_id}
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/channels/${packet.d.channel.id}`);
 
 						break;
 					}
@@ -200,7 +204,8 @@ class Shard extends EventEmitter {
 
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
-							// TODO delete guilds/{packet.d.guild_id}/voicestates/{packet.d.user_id}
+							await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+								`/voicestates/${packet.d.user.id}`);
 						} else {
 							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
 						}
@@ -266,7 +271,7 @@ class Shard extends EventEmitter {
 					$browser: "Oxyl",
 					$device: "Oxyl"
 				},
-				shard: [this.id, this.totalShards],
+				shard: [this.id, this.shardCount],
 				presence: {
 					since: null,
 					game: {
