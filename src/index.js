@@ -16,7 +16,7 @@ async function getShards() {
 			.query({ hostname: os.hostname() });
 
 		return {
-			shardCount: body.shardCount,
+			shardCount: body.shard_count,
 			shardsToUse: body.shards,
 			gatewayURL: body.url
 		};
