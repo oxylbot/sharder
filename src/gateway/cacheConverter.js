@@ -1,7 +1,7 @@
 module.exports = {
 	member(data) {
 		return {
-			guildID: data.guild_id,
+			guildId: data.guild_id,
 			nickname: data.nick,
 			roles: data.roles,
 			joinedAt: data.joined_at,
@@ -11,7 +11,7 @@ module.exports = {
 	role(data) {
 		return {
 			id: data.id,
-			guildID: data.guild_id,
+			guildId: data.guild_id,
 			name: data.name,
 			color: data.color,
 			position: data.position,
@@ -30,14 +30,14 @@ module.exports = {
 	channel(data) {
 		return {
 			id: data.id,
-			guildID: data.guild_id,
+			guildId: data.guild_id,
 			type: data.type,
 			position: data.position,
 			name: data.name,
 			nsfw: !!data.nsfw,
 			overwrites: (data.permission_overwrites || []).map(overwrite => module.exports.overwrite(overwrite)),
 			userLimit: data.user_limit,
-			parentID: data.parent_id
+			parentId: data.parent_id
 		};
 	},
 	overwrite(data) {
@@ -53,7 +53,7 @@ module.exports = {
 			id: data.id,
 			name: data.name,
 			icon: data.icon || null,
-			ownerID: data.owner_id,
+			ownerId: data.owner_id,
 			region: data.region,
 			roles: data.roles.map(role => module.exports.role(role)),
 			memberCount: data.member_count || null,
@@ -64,9 +64,9 @@ module.exports = {
 	},
 	voiceState(data) {
 		return {
-			guildID: data.guild_id,
-			channelID: data.channel_id,
-			userID: data.user_id,
+			guildId: data.guild_id,
+			channelId: data.channel_id,
+			userId: data.user_id,
 			deaf: data.deaf,
 			mute: data.mute,
 			selfDeaf: data.self_deaf,
