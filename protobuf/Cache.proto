@@ -6,7 +6,7 @@ message CacheRequest {
 }
 
 message Member {
-	required User user = 6;
+	required User user = 1;
 	required string guild_id = 2;
 	optional string nickname = 3;
 	repeated string roles = 4;
