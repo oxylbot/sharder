@@ -1,11 +1,6 @@
-sudo: required
-
-services:
- - docker
-
 language: node_js
 node_js:
- - "10.12.0"
+ - "11.6.0"
 cache: npm
 
 git:
@@ -14,18 +9,8 @@ git:
 env:
  - NODE_ENV=development
 
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y build-essential
-
 install:
  - npm install
 
 script:
  - eslint . --quiet
-
-after_success:
-  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-  - docker pull oxyl/sharder:latest
-  - docker build -t oxyl/sharder:latest .
-  - docker push oxyl/sharder:latest

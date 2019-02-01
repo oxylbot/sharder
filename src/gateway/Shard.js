@@ -2,10 +2,11 @@ const cacheConverter = require("./cacheConverter");
 const CompressionHandler = require("./CompressionHandler");
 const { GATEWAY: constants } = require("../constants");
 const EventEmitter = require("events");
+const superagent = require("superagent");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
-	constructor({ gatewayURL, shardID, totalShards, messageSocket, cacheSocket, token }) {
+	constructor({ gatewayURL, shardID, shardCount, messageSocket, cacheSocket, token }) {
 		super();
 
 		gatewayURL += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
@@ -13,7 +14,7 @@ class Shard extends EventEmitter {
 
 		this.token = token;
 		this.id = shardID;
-		this.totalShards = totalShards;
+		this.shardCount = shardCount;
 		this.messageSocket = messageSocket;
 		this.cacheSocket = cacheSocket;
 
@@ -24,6 +25,7 @@ class Shard extends EventEmitter {
 		this.latency = 0;
 		this.user = reconnect ? this.user : null;
 		this.status = reconnect ? "resuming" : "disconnected";
+		this.messageQueue = [];
 
 		this.sessionID = reconnect ? this.sessionID : null;
 		this.lastSequence = reconnect ? this.lastSequence : null;
@@ -34,7 +36,7 @@ class Shard extends EventEmitter {
 
 		if(this.compressionHandler) this.compressionHandler.kill();
 		this.compressionHandler = new CompressionHandler();
-		this.compressionHandler.on("message", this.packet);
+		this.compressionHandler.on("message", this.packet.bind(this));
 
 		if(this.ws) this.close();
 
@@ -48,8 +50,15 @@ class Shard extends EventEmitter {
 	}
 
 	async send(data) {
-		// TODO: check if websocket is open and add it to a queue, most likely a queue class
-		this.ws.send(this.compressionHandler.prepareForSending(data));
+		if(this.status !== "ready") this.messageQueue.push(data);
+		else this.ws.send(this.compressionHandler.compress(data));
+	}
+
+	async emptyMessageQueue() {
+		while(this.messageQueue.length) {
+			this.send(this.messageQueue.shift());
+			await new Promise(resolve => setTimeout(resolve, 500));
+		}
 	}
 
 	heartbeat() {
@@ -67,6 +76,7 @@ class Shard extends EventEmitter {
 				switch(packet.t) {
 					case "RESUMED": {
 						this.status = "ready";
+						this.emptyMessageQueue();
 
 						break;
 					}
@@ -75,6 +85,7 @@ class Shard extends EventEmitter {
 						this.emit("ready");
 
 						this.status = "ready";
+						this.emptyMessageQueue();
 						this.user = packet.d.user;
 						this.sessionID = packet.d.session_id;
 
@@ -82,51 +93,41 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_ADD": {
-						this.cache("member", cacheConverter.member(packet.d));
+						this.cacheSocket("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.members()
-							.get(packet.d.user.id)
-							.delete()
-							.run();
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/members/${packet.d.user.id}`);
 
 						break;
 					}
 
 					case "GUILD_MEMBER_UPDATE": {
-						this.cache("member", cacheConverter.member(packet.d));
+						this.cacheSocket.send("member", cacheConverter.member(packet.d));
 
 						break;
 					}
 
 					case "GUILD_ROLE_CREATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cache("role", cacheConverter.role(role));
+						this.cacheSocket.send("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_UPDATE": {
 						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cache("role", cacheConverter.role(role));
+						this.cacheSocket.send("role", cacheConverter.role(role));
 
 						break;
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.roles()
-							.get(packet.d.role_id)
-							.delete()
-							.run();
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/roles/${packet.d.role.id}`);
 
 						break;
 					}
@@ -146,7 +147,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "USER_UPDATE": {
-						this.cache("user", cacheConverter.user(packet.d));
+						this.cacheSocket.send("user", cacheConverter.user(packet.d));
 
 						break;
 					}
@@ -164,63 +165,49 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_CREATE": {
-						this.cache("guild", cacheConverter.guild(packet.d));
+						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_UPDATE": {
-						this.cache("guild", cacheConverter.guild(packet.d));
+						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						this.request()
-							.discord()
-							.guild(packet.d.id)
-							.delete()
-							.run();
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}`);
 
 						break;
 					}
 
 					case "CHANNEL_DELETE": {
-						this.request()
-							.discord()
-							.guild(packet.d.guild_id)
-							.channels()
-							.get(packet.d.id)
-							.delete()
-							.run();
+						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							`/channels/${packet.d.channel.id}`);
 
 						break;
 					}
 
 					case "CHANNEL_UPDATE": {
-						this.cache("channel", cacheConverter.channel(packet.d));
+						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "CHANNEL_CREATE": {
-						this.cache("channel", cacheConverter.channel(packet.d));
+						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
 
 						break;
 					}
 
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
-							this.request()
-								.discord()
-								.guild(packet.d.guild_id)
-								.voiceStates()
-								.get(packet.d.user_id)
-								.delete()
-								.run();
+							await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+								`/voicestates/${packet.d.user.id}`);
 						} else {
-							this.cache("voiceState", cacheConverter.voiceState(packet.d));
+							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
 						}
 
 						break;
@@ -284,7 +271,7 @@ class Shard extends EventEmitter {
 					$browser: "Oxyl",
 					$device: "Oxyl"
 				},
-				shard: [this.id, this.totalShards],
+				shard: [this.id, this.shardCount],
 				presence: {
 					since: null,
 					game: {

@@ -1,18 +1,17 @@
 module.exports = {
 	member(data) {
 		return {
-			id: data.user.id,
-			guildID: data.guild_id,
-			nickname: data.nick || null,
+			guildId: data.guild_id,
+			nickname: data.nick,
 			roles: data.roles,
-			joinedAt: data.joined_at || null,
+			joinedAt: data.joined_at,
 			user: module.exports.user(data.user)
 		};
 	},
 	role(data) {
 		return {
 			id: data.id,
-			guildID: data.guild_id,
+			guildId: data.guild_id,
 			name: data.name,
 			color: data.color,
 			position: data.position,
@@ -24,23 +23,21 @@ module.exports = {
 			id: data.id,
 			username: data.username,
 			discriminator: data.discriminator,
-			avatar: data.avatar || null,
+			avatar: data.avatar,
 			bot: !!data.bot
 		};
 	},
 	channel(data) {
 		return {
 			id: data.id,
-			guildID: data.guild_id,
+			guildId: data.guild_id,
 			type: data.type,
 			position: data.position,
 			name: data.name,
 			nsfw: !!data.nsfw,
-			overwrites: data.permission_overwrites ?
-				data.permission_overwrites.map(overwrite => module.exports.overwrite(overwrite)) :
-				[],
-			userLimit: data.user_limit !== "undefined" ? data.user_limit : null,
-			parentID: data.parent_id
+			overwrites: (data.permission_overwrites || []).map(overwrite => module.exports.overwrite(overwrite)),
+			userLimit: data.user_limit,
+			parentId: data.parent_id
 		};
 	},
 	overwrite(data) {
@@ -56,26 +53,20 @@ module.exports = {
 			id: data.id,
 			name: data.name,
 			icon: data.icon || null,
-			ownerID: data.owner_id,
+			ownerId: data.owner_id,
 			region: data.region,
 			roles: data.roles.map(role => module.exports.role(role)),
 			memberCount: data.member_count || null,
-			members: data.members ?
-				data.members.map(member => module.exports.member(member)) :
-				[],
-			voiceStates: data.voice_states ?
-				data.voice_states.map(voiceState => module.exports.voiceState(voiceState)) :
-				[],
-			channels: data.channels ?
-				data.channels.map(channel => module.exports.channel(channel)) :
-				[]
+			members: (data.members || []).map(member => module.exports.member(member)),
+			voiceStates: (data.voice_states || []).map(voiceState => module.exports.voiceState(voiceState)),
+			channels: (data.channels || []).map(channel => module.exports.channel(channel))
 		};
 	},
 	voiceState(data) {
 		return {
-			guildID: data.guild_id,
-			channelID: data.channel_id,
-			userID: data.user_id,
+			guildId: data.guild_id,
+			channelId: data.channel_id,
+			userId: data.user_id,
 			deaf: data.deaf,
 			mute: data.mute,
 			selfDeaf: data.self_deaf,
