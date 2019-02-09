@@ -31,43 +31,43 @@ message User {
 }
 
 message Channel {
-	string id = 1;
-	string guild_id = 2;
-	uint32 type = 3;
-	uint32 position = 4;
-	string name = 5;
-	boolean nsfw = 6;
-	repeated Overwrite overwrites = 7;
-	uint32 user_limit = 8;
-	string parent_id = 9;
+	required string id = 1;
+	required string guild_id = 2;
+	required uint32 type = 3;
+	required uint32 position = 4;
+	required string name = 5;
+	optional boolean nsfw = 6;
+	optional repeated Overwrite overwrites = 7;
+	optional uint32 user_limit = 8;
+	optional string parent_id = 9;
 }
 
 message Overwrite {
-	string id = 1;
-	string type = 2;
-	uint64 allow = 3;
-	uint64 deny = 4;
+	required string id = 1;
+	required string type = 2;
+	required uint64 allow = 3;
+	required uint64 deny = 4;
 }
 
 message Guild {
-	string id = 1;
-	string name = 2;
-	string icon = 3;
-	string owner_id = 4;
-	string region = 5;
+	required string id = 1;
+	required string name = 2;
+	optional string icon = 3;
+	required string owner_id = 4;
+	required string region = 5;
 	repeated Role roles = 6;
-	uint32 member_count = 7;
+	required uint32 member_count = 7;
 	repeated Member members = 8;
 	repeated VoiceState voice_states = 9;
 	repeated Channel channels = 10;
 }
 
 message VoiceState {
-	string guild_id = 1;
-	string user_id = 2;
-	string channel_id = 3;
-	boolean deaf = 4;
-	boolean mute = 5;
-	boolean self_deaf = 6;
-	boolean self_mute = 7;
+	required string guild_id = 1;
+	required string user_id = 2;
+	required string channel_id = 3;
+	required boolean deaf = 4;
+	required boolean mute = 5;
+	required boolean self_deaf = 6;
+	required boolean self_mute = 7;
 }
