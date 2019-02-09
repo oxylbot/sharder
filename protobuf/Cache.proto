@@ -37,7 +37,7 @@ message Channel {
 	required uint32 position = 4;
 	required string name = 5;
 	optional boolean nsfw = 6;
-	optional repeated Overwrite overwrites = 7;
+	repeated Overwrite overwrites = 7;
 	optional uint32 user_limit = 8;
 	optional string parent_id = 9;
 }
