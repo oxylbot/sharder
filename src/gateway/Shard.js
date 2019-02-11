@@ -5,6 +5,8 @@ const EventEmitter = require("events");
 const superagent = require("superagent");
 const WebSocket = require("ws");
 
+const gatewayAPIUrl = `http://gateway:${process.env.GATEWAY_SERVICE_PORT}`;
+
 class Shard extends EventEmitter {
 	constructor({ gatewayURL, shardID, shardCount, messageSocket, cacheSocket, token }) {
 		super();
@@ -99,7 +101,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_REMOVE": {
-						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+						await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}` +
 							`/members/${packet.d.user.id}`);
 
 						break;
@@ -126,7 +128,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_ROLE_DELETE": {
-						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+						await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}` +
 							`/roles/${packet.d.role.id}`);
 
 						break;
@@ -178,13 +180,13 @@ class Shard extends EventEmitter {
 
 					case "GUILD_DELETE": {
 						if(packet.d.unavailable) return;
-						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}`);
+						await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}`);
 
 						break;
 					}
 
 					case "CHANNEL_DELETE": {
-						await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+						await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}` +
 							`/channels/${packet.d.channel.id}`);
 
 						break;
@@ -204,7 +206,7 @@ class Shard extends EventEmitter {
 
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
-							await superagent.delete(`${process.env.GATEWAY_API}guilds/${packet.d.guild_id}` +
+							await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}` +
 								`/voicestates/${packet.d.user.id}`);
 						} else {
 							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));

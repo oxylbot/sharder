@@ -7,12 +7,14 @@ const Shard = require("./gateway/Shard");
 const superagent = require("superagent");
 
 const shards = new Map();
-const cacheSocket = new CacheSocket(process.env.CACHE_SOCKET_ADDRESS);
-const messageSocket = new MessageSocket(process.env.MESSAGE_SOCKET_ADDRESS);
+const cacheSocket = new CacheSocket();
+const messageSocket = new MessageSocket();
+
+const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRATOR_SERVICE_PORT}`;
 
 async function getShards() {
 	try {
-		const { body } = await superagent.get(`${process.env.ORCHESTRATOR_API}shards`)
+		const { body } = await superagent.get(`${orchestratorURL}/shards`)
 			.query({ hostname: os.hostname() });
 
 		return {
@@ -49,7 +51,7 @@ async function init() {
 		await new Promise(resolve => setTimeout(resolve, 5500));
 	}
 
-	await superagent.put(`${process.env.ORCHESTRATOR_API}finished`);
+	await superagent.put(`${orchestratorURL}/finished`);
 }
 
 init();
