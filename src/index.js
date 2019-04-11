@@ -35,9 +35,14 @@ async function init() {
 	cacheSocket.start(cacheProto);
 	messageSocket.start(messageProto);
 
+	console.log("Getting shards");
 	const { shardCount, shardsToUse, gatewayURL } = await getShards();
+	console.log("Shard count", shardCount);
+	console.log("Shard to use", shardsToUse);
+	console.log("Gateway URL", gatewayURL);
 
 	for(const shardID of shardsToUse) {
+		console.log("Creating shard", shardID);
 		const shard = new Shard({
 			gatewayURL,
 			shardID,
