@@ -25,7 +25,7 @@ async function getShards() {
 			gatewayURL: body.url
 		};
 	} catch(error) {
-		if(error.response.status >= 400 && error.response.status !== 429) {
+		if(error.status && error.status >= 400 && error.status !== 429) {
 			console.error(error);
 			process.exit(1);
 		}
