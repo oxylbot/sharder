@@ -25,9 +25,12 @@ async function getShards() {
 			gatewayURL: body.url
 		};
 	} catch(error) {
-		const { response: { body } } = error;
-		console.log("Unfortunate error!", error.stack, body);
-		await new Promise(resolve => setTimeout(resolve, body.retry_at - Date.now()));
+		if(error.response.status >= 400 && error.response.status !== 429) {
+			process.exit(1);
+			console.error(error);
+		}
+
+		await new Promise(resolve => setTimeout(resolve, error.respose.body.retry_at - Date.now()));
 		return await getShards();
 	}
 }
