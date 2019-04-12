@@ -14,7 +14,7 @@ const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRA
 
 async function getShards() {
 	try {
-		console.log("Sending reqquest");
+		console.log("Sending request");
 		const { body } = await superagent.get(`${orchestratorURL}/shards`)
 			.query({ hostname: os.hostname() });
 		console.log("Response body", body);
@@ -26,8 +26,8 @@ async function getShards() {
 		};
 	} catch(error) {
 		if(error.response.status >= 400 && error.response.status !== 429) {
-			process.exit(1);
 			console.error(error);
+			process.exit(1);
 		}
 
 		await new Promise(resolve => setTimeout(resolve, error.respose.body.retry_at - Date.now()));
