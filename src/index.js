@@ -31,6 +31,7 @@ async function getShards() {
 		}
 
 		console.log("error resp body", error.response.body);
+		process.exit(1);
 		await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
 		return await getShards();
 	}
@@ -65,6 +66,7 @@ async function init() {
 	}
 
 	await superagent.put(`${orchestratorURL}/finished`);
+	console.log("put finished");
 }
 
 init();
