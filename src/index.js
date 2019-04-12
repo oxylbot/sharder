@@ -14,15 +14,19 @@ const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRA
 
 async function getShards() {
 	try {
+		console.log("Sending reqquest");
 		const { body } = await superagent.get(`${orchestratorURL}/shards`)
 			.query({ hostname: os.hostname() });
+		console.log("Response body", body);
 
 		return {
 			shardCount: body.shard_count,
 			shardsToUse: body.shards,
 			gatewayURL: body.url
 		};
-	} catch({ response: { body } }) {
+	} catch(error) {
+		const { response: { body } } = error;
+		console.log("Unfortunate error!", error.stack, body);
 		await new Promise(resolve => setTimeout(resolve, body.retry_at - Date.now()));
 		return await getShards();
 	}
