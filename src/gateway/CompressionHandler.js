@@ -41,7 +41,7 @@ class CompressionHandler extends EventEmitter {
 
 	flush() {
 		this.flushing = true;
-		this.unzip.flush(zlib.constants.Z_SYNC_FLUSH, this.flushed);
+		this.unzip.flush(zlib.constants.Z_SYNC_FLUSH, this.flushed.bind(this));
 	}
 
 	flushed() {
