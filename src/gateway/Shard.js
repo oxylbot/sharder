@@ -24,6 +24,7 @@ class Shard extends EventEmitter {
 	}
 
 	reset(reconnect = false) {
+		console.log("resetting shard!");
 		this.latency = 0;
 		this.user = reconnect ? this.user : null;
 		this.status = reconnect ? "resuming" : "disconnected";
@@ -47,16 +48,19 @@ class Shard extends EventEmitter {
 	}
 
 	close() {
+		console.log("closing shard");
 		this.ws.close(1000);
 		this.ws.removeAllListeners();
 	}
 
 	async send(data) {
+		console.log("sending", data);
 		if(this.status !== "ready") this.messageQueue.push(data);
 		else this.ws.send(this.compressionHandler.compress(data));
 	}
 
 	async emptyMessageQueue() {
+		console.log("emptying queue");
 		while(this.messageQueue.length) {
 			this.send(this.messageQueue.shift());
 			await new Promise(resolve => setTimeout(resolve, 500));
@@ -64,6 +68,7 @@ class Shard extends EventEmitter {
 	}
 
 	heartbeat() {
+		console.log("sending heartbeat");
 		this.lastSentHeartbeat = Date.now();
 
 		this.send({
@@ -73,6 +78,7 @@ class Shard extends EventEmitter {
 	}
 
 	async packet(packet) {
+		console.log("recieved packet", packet);
 		switch(packet.op) {
 			case constants.OPCODES.DISPATCH: {
 				switch(packet.t) {
@@ -255,6 +261,7 @@ class Shard extends EventEmitter {
 	}
 
 	resume() {
+		console.log("resuming session");
 		this.status = "resuming";
 		this.send({
 			token: this.token,
@@ -264,6 +271,7 @@ class Shard extends EventEmitter {
 	}
 
 	identify() {
+		console.log("identifying");
 		this.send({
 			op: constants.OPCODES.IDENTIFY,
 			d: {

@@ -31,9 +31,12 @@ class CompressionHandler extends EventEmitter {
 	}
 
 	push(data) {
+		console.log("pushing data");
 		if(this.flushing) {
+			console.log("flushing, adding to queue");
 			this.queue.push(data);
 		} else {
+			console.log("not flushing, writing");
 			this.unzip.write(data);
 			if(this.endOfStream(data)) this.flush();
 		}
@@ -41,6 +44,7 @@ class CompressionHandler extends EventEmitter {
 
 	flush() {
 		this.flushing = true;
+		console.log("flush time");
 		this.unzip.flush(zlib.constants.Z_SYNC_FLUSH, this.flushed.bind(this));
 	}
 
@@ -48,9 +52,8 @@ class CompressionHandler extends EventEmitter {
 		this.flushing = false;
 		if(!this.chunks.length) return;
 
-		let buffer;
+		let [buffer] = this.chunks;
 		if(this.chunks.length > 1) buffer = Buffer.concat(this.chunks);
-		else [buffer] = this.chunks;
 		this.chunks = [];
 
 		while(this.queue.length) {
@@ -63,6 +66,7 @@ class CompressionHandler extends EventEmitter {
 			}
 		}
 
+		console.log("emitting message");
 		this.emit("message", erlpack.unpack(buffer));
 	}
 }
