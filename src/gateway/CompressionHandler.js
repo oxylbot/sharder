@@ -50,11 +50,11 @@ class CompressionHandler extends EventEmitter {
 
 		let buffer;
 		if(this.chunks.length > 1) buffer = Buffer.concat(this.chunks);
-		else [buffer] = buffer;
+		else [buffer] = this.chunks;
 		this.chunks = [];
 
-		while(this.incoming.length) {
-			const data = this.incoming.shift();
+		while(this.queue.length) {
+			const data = this.queue.shift();
 			this.unzip.write(data);
 
 			if(this.endOfStream(data)) {
