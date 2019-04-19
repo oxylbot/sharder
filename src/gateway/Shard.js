@@ -23,14 +23,14 @@ class Shard extends EventEmitter {
 		this.reset();
 	}
 
-	reset(reconnect = false) {
+	reset(reconnecting = false) {
 		this.latency = 0;
-		this.user = reconnect ? this.user : null;
-		this.status = reconnect ? "resuming" : "disconnected";
+		this.user = reconnecting ? this.user : null;
+		this.status = reconnecting ? "resuming" : "disconnected";
 		this.messageQueue = [];
 
-		this.sessionID = reconnect ? this.sessionID : null;
-		this.lastSequence = reconnect ? this.lastSequence : null;
+		this.sessionID = reconnecting ? this.sessionID : null;
+		this.lastSequence = reconnecting ? this.lastSequence : null;
 		this.lastSentHeartbeat = null;
 
 		if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
@@ -44,6 +44,31 @@ class Shard extends EventEmitter {
 
 		this.ws = new WebSocket(this.url);
 		this.ws.on("message", this.compressionHandler.push.bind(this.compressionHandler));
+		this.ws.on("close", (code, reason) => {
+			const [reconnect, errorMessage] = {
+				1006: [true, "Connection reset by peer"],
+				4001: [true, "Unknown opcode / invalid opcode payload"],
+				4002: [true, "Invalid payload"],
+				4003: [true, "Sent payload before identifying"],
+				4004: [true, "Incorrect identify payload"],
+				4005: [true, "Already identified"],
+				4007: [true, "Invalid resume sequence"],
+				4008: [true, "Rate limited"],
+				4009: [true, "Session timeout"],
+				4010: [false, "Invalid shard"],
+				4011: [false, "Sharding required"]
+			}[code] || [true, "Unknown error"];
+
+			if(code === 4007) this.lastSequence = null;
+			if([4007, 4009].includes(code)) this.sessionID = null;
+
+			if(reconnect) this.reset(true);
+
+			const error = new Error(errorMessage);
+			error.code = code;
+			error.reason = reason;
+			this.emit("disconnectError", error);
+		});
 	}
 
 	close() {

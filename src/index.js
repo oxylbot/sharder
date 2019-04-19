@@ -47,6 +47,11 @@ async function init() {
 			token: process.env.TOKEN
 		});
 
+		shard.on("disconnectError", error => {
+			console.error(`Shard ${shardID} disconnect with code ${error.code} with reason ${error.reason}\n` +
+						`Message: ${error.message}`);
+		});
+
 		shards.set(shardID, shard);
 		await new Promise(resolve => setTimeout(resolve, 5500));
 	}
