@@ -77,7 +77,7 @@ class Shard extends EventEmitter {
 	}
 
 	async send(data) {
-		if(this.status !== "ready") this.messageQueue.push(data);
+		if(this.status !== "ready" && data.op !== constants.OPCODES.IDENTIFY) this.messageQueue.push(data);
 		else this.ws.send(this.compressionHandler.compress(data));
 	}
 
@@ -293,17 +293,18 @@ class Shard extends EventEmitter {
 			op: constants.OPCODES.IDENTIFY,
 			d: {
 				token: this.token,
+				large_threshold: 50,
 				properties: {
 					$os: process.platform,
-					$browser: "Oxyl",
-					$device: "Oxyl"
+					$browser: "oxyl-sharder",
+					$device: "oxyl-sharder"
 				},
 				shard: [this.id, this.shardCount],
 				presence: {
 					since: null,
 					game: {
 						name: "o!help",
-						type: 0
+						type: 2
 					},
 					status: "online",
 					afk: false

@@ -9,7 +9,7 @@ class CompressionHandler extends EventEmitter {
 		this.unzip = zlib.createUnzip({
 			flush: zlib.constants.Z_SYNC_FLUSH,
 			chunkSize: 128 * 1024
-		}).on(data => this.chunks.push(data));
+		}).on("data", data => this.chunks.push(data));
 
 		this.flushing = false;
 		this.queue = [];
@@ -41,20 +41,19 @@ class CompressionHandler extends EventEmitter {
 
 	flush() {
 		this.flushing = true;
-		this.unzip.flush(zlib.constants.Z_SYNC_FLUSH, this.flushed);
+		this.unzip.flush(zlib.constants.Z_SYNC_FLUSH, this.flushed.bind(this));
 	}
 
 	flushed() {
 		this.flushing = false;
 		if(!this.chunks.length) return;
 
-		let buffer;
+		let [buffer] = this.chunks;
 		if(this.chunks.length > 1) buffer = Buffer.concat(this.chunks);
-		else [buffer] = buffer;
 		this.chunks = [];
 
-		while(this.incoming.length) {
-			const data = this.incoming.shift();
+		while(this.queue.length) {
+			const data = this.queue.shift();
 			this.unzip.write(data);
 
 			if(this.endOfStream(data)) {

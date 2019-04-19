@@ -14,16 +14,25 @@ const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRA
 
 async function getShards() {
 	try {
+		console.log("Sending request");
 		const { body } = await superagent.get(`${orchestratorURL}/shards`)
 			.query({ hostname: os.hostname() });
+		console.log("Response body", body);
 
 		return {
 			shardCount: body.shard_count,
 			shardsToUse: body.shards,
 			gatewayURL: body.url
 		};
-	} catch({ response: { body } }) {
-		await new Promise(resolve => setTimeout(resolve, body.retry_at - Date.now()));
+	} catch(error) {
+		if(!error.response || (error.status && error.status >= 400 && error.status !== 429)) {
+			console.error(error);
+			process.exit(1);
+		}
+
+		console.log("error resp body", error.response.body);
+		process.exit(1);
+		await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
 		return await getShards();
 	}
 }
@@ -35,9 +44,14 @@ async function init() {
 	cacheSocket.start(cacheProto);
 	messageSocket.start(messageProto);
 
+	console.log("Getting shards");
 	const { shardCount, shardsToUse, gatewayURL } = await getShards();
+	console.log("Shard count", shardCount);
+	console.log("Shard to use", shardsToUse);
+	console.log("Gateway URL", gatewayURL);
 
 	for(const shardID of shardsToUse) {
+		console.log("Creating shard", shardID);
 		const shard = new Shard({
 			gatewayURL,
 			shardID,
@@ -57,9 +71,14 @@ async function init() {
 	}
 
 	await superagent.put(`${orchestratorURL}/finished`);
+	console.log("put finished");
 }
 
 init();
+
+process.on("uncaughtException", err => {
+	console.error(err.stack);
+});
 
 process.on("SIGTERM", () => {
 	messageSocket.close();
