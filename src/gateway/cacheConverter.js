@@ -55,7 +55,7 @@ module.exports = {
 			icon: data.icon || null,
 			ownerId: data.owner_id,
 			region: data.region,
-			roles: data.roles.map(role => module.exports.role(role)),
+			roles: data.roles.map(role => module.exports.role(Object.assign(role, { guild_id: data.id }))),
 			memberCount: data.member_count || null,
 			members: (data.members || []).map(member => module.exports.member(member)),
 			voiceStates: (data.voice_states || []).map(voiceState => module.exports.voiceState(voiceState)),

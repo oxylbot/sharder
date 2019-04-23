@@ -36,7 +36,7 @@ message Channel {
 	required uint32 type = 3;
 	required uint32 position = 4;
 	required string name = 5;
-	optional boolean nsfw = 6;
+	optional bool nsfw = 6;
 	repeated Overwrite overwrites = 7;
 	optional uint32 user_limit = 8;
 	optional string parent_id = 9;
@@ -66,8 +66,8 @@ message VoiceState {
 	required string guild_id = 1;
 	required string user_id = 2;
 	required string channel_id = 3;
-	required boolean deaf = 4;
-	required boolean mute = 5;
-	required boolean self_deaf = 6;
-	required boolean self_mute = 7;
+	required bool deaf = 4;
+	required bool mute = 5;
+	required bool self_deaf = 6;
+	required bool self_mute = 7;
 }

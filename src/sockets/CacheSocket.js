@@ -17,7 +17,10 @@ class CacheSocket {
 		const typeProto = this.proto.lookup(type);
 
 		const verifyError = typeProto.verify(message);
-		if(verifyError) throw new Error(verifyError);
+		if(verifyError) {
+			console.log("Invalid message:", message);
+			throw new Error(verifyError);
+		}
 
 		this.socket.send(this.proto.lookup("CacheRequest").encode({
 			type,
