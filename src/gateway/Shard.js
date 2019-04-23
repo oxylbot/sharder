@@ -163,9 +163,9 @@ class Shard extends EventEmitter {
 						if(packet.d.type === 0 && !packet.d.webhook_id && !packet.d.author.bot) {
 							this.messageSocket.send({
 								id:	packet.d.id,
-								channelID: packet.d.channel_id,
-								authorID: packet.d.author.id,
-								guildID: packet.d.guild_id,
+								channelId: packet.d.channel_id,
+								authorId: packet.d.author.id,
+								guildId: packet.d.guild_id,
 								content: packet.d.content
 							});
 						}
