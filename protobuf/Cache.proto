@@ -10,7 +10,7 @@ message Member {
 	required string guild_id = 2;
 	optional string nickname = 3;
 	repeated string roles = 4;
-	required string joined_at = 5;
+	optional string joined_at = 5;
 }
 
 message Role {
