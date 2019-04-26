@@ -19,7 +19,7 @@ message Role {
 	required string name = 3;
 	required uint32 color = 4;
 	required uint32 position = 5;
-	required uint64 permission = 6;
+	required uint64 permissions = 6;
 }
 
 message User {
