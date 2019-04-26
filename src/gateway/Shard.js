@@ -232,7 +232,7 @@ class Shard extends EventEmitter {
 					case "VOICE_STATE_UPDATE": {
 						if(!packet.d.channel_id) {
 							await superagent.delete(`${gatewayAPIUrl}/guilds/${packet.d.guild_id}` +
-								`/voicestates/${packet.d.user.id}`);
+								`/voicestates/${packet.d.user_id}`);
 						} else {
 							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
 						}
