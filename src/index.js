@@ -30,8 +30,6 @@ async function getShards() {
 			process.exit(1);
 		}
 
-		console.log("error resp body", error.response.body);
-		process.exit(1);
 		await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
 		return await getShards();
 	}
