@@ -120,7 +120,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBER_ADD": {
-						this.cacheSocket("member", cacheConverter.member(packet.d));
+						this.cacheSocket.send("member", cacheConverter.member(packet.d));
 
 						break;
 					}
