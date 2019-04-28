@@ -76,8 +76,9 @@ async function init() {
 
 init();
 
-process.on("uncaughtException", err => {
+process.on("unhandledRejection", err => {
 	console.error(err.stack);
+	process.exit(1);
 });
 
 process.on("SIGTERM", () => {
