@@ -26,12 +26,11 @@ async function getShards() {
 		};
 	} catch(error) {
 		if(!error.response || (error.status && error.status >= 400 && error.status !== 429)) {
-			console.error(error);
-			process.exit(1);
+			throw error;
+		} else {
+			await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
+			return await getShards();
 		}
-
-		await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
-		return await getShards();
 	}
 }
 
