@@ -29,7 +29,8 @@ async function getShards() {
 			throw error;
 		} else {
 			await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
-			return await getShards();
+			throw error;
+			// return await getShards();
 		}
 	}
 }
