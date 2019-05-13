@@ -14,10 +14,8 @@ const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRA
 
 async function getShards() {
 	try {
-		console.log("Sending request");
 		const { body } = await superagent.get(`${orchestratorURL}/shards`)
 			.query({ hostname: os.hostname() });
-		console.log("Response body", body);
 
 		return {
 			shardCount: body.shard_count,
@@ -29,8 +27,7 @@ async function getShards() {
 			throw error;
 		} else {
 			await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
-			return { shardCount: 0, shardsToUse: [], gatewayURL: "" };
-			// return await getShards();
+			return await getShards();
 		}
 	}
 }
@@ -44,9 +41,6 @@ async function init() {
 
 	console.log("Getting shards");
 	const { shardCount, shardsToUse, gatewayURL } = await getShards();
-	console.log("Shard count", shardCount);
-	console.log("Shard to use", shardsToUse);
-	console.log("Gateway URL", gatewayURL);
 
 	for(const shardID of shardsToUse) {
 		console.log("Creating shard", shardID);
@@ -76,7 +70,7 @@ init();
 
 process.on("unhandledRejection", err => {
 	console.error(err.stack);
-	process.exit(1);
+	// process.exit(1);
 });
 
 process.on("SIGTERM", () => {

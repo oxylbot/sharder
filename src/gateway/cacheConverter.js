@@ -57,8 +57,9 @@ module.exports = {
 			region: data.region,
 			roles: data.roles.map(role => module.exports.role(Object.assign(role, { guild_id: data.id }))),
 			memberCount: data.member_count || null,
-			members: (data.members || []).map(member => module.exports.member(member)),
-			voiceStates: (data.voice_states || []).map(voiceState => module.exports.voiceState(voiceState)),
+			members: (data.members || []).map(member => module.exports.member(Object.assign(member, { guild_id: data.id }))),
+			voiceStates: (data.voice_states || [])
+				.map(voiceState => module.exports.voiceState(Object.assign(voiceState, { guild_id: data.id }))),
 			channels: (data.channels || []).map(channel => module.exports.channel(channel))
 		};
 	},
