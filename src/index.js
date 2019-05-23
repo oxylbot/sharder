@@ -76,7 +76,7 @@ process.on("unhandledRejection", err => {
 process.on("SIGTERM", () => {
 	messageSocket.close();
 	cacheSocket.close();
-	for(const shard of shards) shard.close();
+	shards.forEach(shard => shard.close());
 
 	process.exit(0);
 });
