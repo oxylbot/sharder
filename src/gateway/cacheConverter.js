@@ -60,7 +60,8 @@ module.exports = {
 			members: (data.members || []).map(member => module.exports.member(Object.assign(member, { guild_id: data.id }))),
 			voiceStates: (data.voice_states || [])
 				.map(voiceState => module.exports.voiceState(Object.assign(voiceState, { guild_id: data.id }))),
-			channels: (data.channels || []).map(channel => module.exports.channel(channel))
+			channels: (data.channels || [])
+				.map(channel => module.exports.channel(Object.assign(channel, { guild_id: data.id })))
 		};
 	},
 	voiceState(data) {
