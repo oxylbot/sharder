@@ -40,9 +40,13 @@ class Shard extends EventEmitter {
 		this.compressionHandler = new CompressionHandler();
 		this.compressionHandler.on("message", this.packet.bind(this));
 
-		if(this.ws) this.close();
+		if(this.ws) {
+			this.close();
+			this.ws.removeAllListeners();
+		} else {
+			this.ws = new WebSocket(this.url);
+		}
 
-		this.ws = new WebSocket(this.url);
 		this.ws.on("message", this.compressionHandler.push.bind(this.compressionHandler));
 		this.ws.on("close", (code, reason) => {
 			const [reconnect, errorMessage] = {
