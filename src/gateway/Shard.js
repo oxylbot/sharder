@@ -40,12 +40,13 @@ class Shard extends EventEmitter {
 		this.compressionHandler = new CompressionHandler();
 		this.compressionHandler.on("message", this.packet.bind(this));
 
-		if(this.ws) {
-			this.close();
-			this.ws.removeAllListeners();
-		} else {
-			this.ws = new WebSocket(this.url);
-		}
+		if(this.ws) this.close();
+
+		setTimeout(() => this.createWebsocket(), 15000);
+	}
+
+	createWebsocket() {
+		this.ws = new WebSocket(this.url);
 
 		this.ws.on("message", this.compressionHandler.push.bind(this.compressionHandler));
 		this.ws.on("close", (code, reason) => {
@@ -66,7 +67,7 @@ class Shard extends EventEmitter {
 			if(code === 4007) this.lastSequence = null;
 			if([4007, 4009].includes(code)) this.sessionID = null;
 
-			if(reconnect) setTimeout(() => this.reset(true), 15000);
+			if(reconnect) this.reset(true);
 
 			const error = new Error(errorMessage);
 			error.code = code;
