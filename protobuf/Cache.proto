@@ -56,7 +56,7 @@ message Guild {
 	required string owner_id = 4;
 	required string region = 5;
 	repeated Role roles = 6;
-	required uint32 member_count = 7;
+	optional uint32 member_count = 7;
 	repeated Member members = 8;
 	repeated VoiceState voice_states = 9;
 	repeated Channel channels = 10;
