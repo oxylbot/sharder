@@ -63,7 +63,7 @@ async function init() {
 	}
 
 	await superagent.put(`${orchestratorURL}/finished`);
-	console.log("put finished");
+	console.log("PUT /finished");
 }
 
 init();
