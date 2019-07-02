@@ -72,7 +72,7 @@ class Shard extends EventEmitter {
 			if(code === 4007) this.lastSequence = null;
 			if([4007, 4009].includes(code)) this.sessionID = null;
 
-			if(reconnect) this.reset(true);
+			this.reset(reconnect);
 
 			const error = new Error(errorMessage);
 			error.code = code;
