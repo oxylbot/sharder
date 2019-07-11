@@ -87,7 +87,8 @@ class Shard extends EventEmitter {
 	}
 
 	async send(data) {
-		if(this.status !== "ready" && data.op !== constants.OPCODES.IDENTIFY) this.messageQueue.push(data);
+		if(this.status !== "ready" &&
+			![constants.OPCODES.IDENTIFY, constants.OPCODES.RESUME].includes(data.op)) this.messageQueue.push(data);
 		else this.ws.send(this.compressionHandler.compress(data));
 	}
 
@@ -260,7 +261,7 @@ class Shard extends EventEmitter {
 			}
 
 			case constants.OPCODES.HELLO: {
-				console.log("HELELO: heartbeat inteval", packet.d.heartbeat_interval);
+				console.log("HELLO: heartbeat interval", packet.d.heartbeat_interval);
 				if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 				this.heartbeatInterval = setInterval(() => this.heartbeat(), packet.d.heartbeat_interval);
 
@@ -295,6 +296,12 @@ class Shard extends EventEmitter {
 			case constants.OPCODES.HEARTBEAT_ACK: {
 				console.log("HEARTBEAT ACK: heartbeat was acknowledged");
 				this.latency = Date.now() - this.lastSentHeartbeat;
+				break;
+			}
+
+			default: {
+				console.log("Unknown OP:", packet);
+				break;
 			}
 		}
 	}
@@ -303,9 +310,12 @@ class Shard extends EventEmitter {
 		console.log("resuming the session");
 		this.status = "resuming";
 		this.send({
-			token: this.token,
-			session_id: this.sessionID,
-			seq: this.lastSequence
+			op: constants.OPCODES.RESUME,
+			d: {
+				token: this.token,
+				session_id: this.sessionID,
+				seq: this.lastSequence
+			}
 		});
 	}
 
