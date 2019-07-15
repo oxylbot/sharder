@@ -14,6 +14,7 @@ class CacheSocket {
 
 	send(type, message) {
 		type = type.charAt(0).toUpperCase() + type.substring(1);
+		console.log("Sending a", type, "cache with data", message);
 		const typeProto = this.proto.lookup(type);
 
 		const verifyError = typeProto.verify(message);
