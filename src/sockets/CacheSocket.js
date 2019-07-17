@@ -9,12 +9,13 @@ class CacheSocket {
 
 	start(proto) {
 		this.proto = proto;
+		console.log(`tcp://cache-socket-zmq-proxy:${process.env.GATEWAY_CACHE_ZMQ_PROXY_SERVICE_PORT_PULL}`);
 		this.socket.connect(`tcp://cache-socket-zmq-proxy:${process.env.GATEWAY_CACHE_ZMQ_PROXY_SERVICE_PORT_PULL}`);
 	}
 
 	send(type, message) {
 		type = type.charAt(0).toUpperCase() + type.substring(1);
-		console.log("Sending a", type, "cache with data", message);
+		console.log("Sending a", type, "cache with data keys", Object.keys(message));
 		const typeProto = this.proto.lookup(type);
 
 		const verifyError = typeProto.verify(message);
