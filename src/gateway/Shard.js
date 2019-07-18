@@ -99,6 +99,16 @@ class Shard extends EventEmitter {
 		}
 	}
 
+	requestMembers(guildID) {
+		console.log("Requesting guild members for", guildID);
+
+		this.send({
+			guild_id: guildID,
+			query: "",
+			limit: 0
+		});
+	}
+
 	heartbeat() {
 		console.log("Sending heartbeat");
 		this.lastSentHeartbeat = Date.now();
@@ -148,6 +158,14 @@ class Shard extends EventEmitter {
 
 					case "GUILD_MEMBER_UPDATE": {
 						this.cacheSocket.send("member", cacheConverter.member(packet.d));
+
+						break;
+					}
+
+					case "GUILD_MEMBER_CHUNK": {
+						packet.d.members.forEach(member => {
+							this.cacheSocket.send("member", cacheConverter.member(member));
+						});
 
 						break;
 					}
@@ -207,7 +225,10 @@ class Shard extends EventEmitter {
 
 					case "GUILD_CREATE": {
 						console.log("DISPATCH: GUILD CREATE!");
+						if(packet.d.unavailable) return;
+
 						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
+						this.requestMembers(packet.d.id);
 
 						break;
 					}
@@ -320,7 +341,7 @@ class Shard extends EventEmitter {
 	}
 
 	identify() {
-		console.log("indetifying to gateway");
+		console.log("identifying to gateway");
 		this.send({
 			op: constants.OPCODES.IDENTIFY,
 			d: {
