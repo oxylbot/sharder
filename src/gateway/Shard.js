@@ -326,6 +326,7 @@ class Shard extends EventEmitter {
 			d: {
 				token: this.token,
 				large_threshold: 50,
+				guild_subscriptions: false,
 				properties: {
 					$os: process.platform,
 					$browser: "oxyl-sharder",
