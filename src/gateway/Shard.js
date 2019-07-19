@@ -103,9 +103,12 @@ class Shard extends EventEmitter {
 		console.log("Requesting guild members for", guildID);
 
 		this.send({
-			guild_id: guildID,
-			query: "",
-			limit: 0
+			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
+			d: {
+				guild_id: guildID,
+				query: "",
+				limit: 0
+			}
 		});
 	}
 
