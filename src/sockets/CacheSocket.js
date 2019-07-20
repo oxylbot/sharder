@@ -14,14 +14,10 @@ class CacheSocket {
 
 	send(type, message) {
 		type = type.charAt(0).toUpperCase() + type.substring(1);
-		console.log("Sending a", type, "cache with data keys", Object.keys(message));
 		const typeProto = this.proto.lookup(type);
 
 		const verifyError = typeProto.verify(message);
-		if(verifyError) {
-			console.log("Invalid message:", message);
-			throw new Error(verifyError);
-		}
+		if(verifyError) throw new Error(verifyError);
 
 		this.socket.send(this.proto.lookup("CacheRequest").encode({
 			type,
