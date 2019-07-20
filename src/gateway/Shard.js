@@ -256,7 +256,7 @@ class Shard extends EventEmitter {
 					case "GUILD_DELETE": {
 						console.log("DISPATCH: GUILD DELETE!");
 						if(packet.d.unavailable) return;
-						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.guild_id}`);
+						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.id}`);
 
 						break;
 					}
