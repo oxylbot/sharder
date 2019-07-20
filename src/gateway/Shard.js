@@ -103,19 +103,19 @@ class Shard extends EventEmitter {
 		}
 	}
 
-	requestMembers(guildID) {
-		if(!Array.isArray(guildID)) guildID = [guildID];
+	requestMembers(guildIDs) {
+		if(!Array.isArray(guildIDs)) guildIDs = [guildIDs];
 
 		if(this.status !== "ready") {
-			this.requestMembersQueue.push(...guildID);
+			this.requestMembersQueue.push(...guildIDs);
 			return;
 		}
 
-		console.log("Requesting guild members for", guildID);
+		console.log("Requesting guild members for", guildIDs);
 		this.send({
 			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
 			d: {
-				guild_id: guildID,
+				guild_id: guildIDs,
 				query: "",
 				limit: 0
 			}
@@ -175,7 +175,7 @@ class Shard extends EventEmitter {
 						break;
 					}
 
-					case "GUILD_MEMBER_CHUNK": {
+					case "GUILD_MEMBERS_CHUNK": {
 						packet.d.members.forEach(member => {
 							member.guild_id = packet.d.guild_id;
 							this.cacheSocket.send("member", cacheConverter.member(member));
