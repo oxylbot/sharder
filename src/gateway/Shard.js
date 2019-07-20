@@ -29,6 +29,7 @@ class Shard extends EventEmitter {
 		this.user = reconnecting ? this.user : null;
 		this.status = reconnecting ? "resuming" : "disconnected";
 		this.messageQueue = [];
+		this.requestMembersQueue = [];
 
 		this.sessionID = reconnecting ? this.sessionID : null;
 		this.lastSequence = reconnecting ? this.lastSequence : null;
@@ -92,7 +93,10 @@ class Shard extends EventEmitter {
 		else this.ws.send(this.compressionHandler.compress(data));
 	}
 
-	async emptyMessageQueue() {
+	async emptyQueues() {
+		this.requestMembers(this.requestMembersQueue);
+		this.requestMembersQueue = [];
+
 		while(this.messageQueue.length) {
 			this.send(this.messageQueue.shift());
 			await new Promise(resolve => setTimeout(resolve, 500));
@@ -100,8 +104,14 @@ class Shard extends EventEmitter {
 	}
 
 	requestMembers(guildID) {
-		console.log("Requesting guild members for", guildID);
+		if(!Array.isArray(guildID)) guildID = [guildID];
 
+		if(this.status !== "ready") {
+			this.requestMembersQueue.push(...guildID);
+			return;
+		}
+
+		console.log("Requesting guild members for", guildID);
 		this.send({
 			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
 			d: {
@@ -129,7 +139,7 @@ class Shard extends EventEmitter {
 					case "RESUMED": {
 						console.log("DISPATCH: Resumed!");
 						this.status = "ready";
-						this.emptyMessageQueue();
+						this.emptyQueues();
 
 						break;
 					}
@@ -139,7 +149,7 @@ class Shard extends EventEmitter {
 						this.emit("ready");
 
 						this.status = "ready";
-						this.emptyMessageQueue();
+						this.emptyQueues();
 						this.user = packet.d.user;
 						this.sessionID = packet.d.session_id;
 
@@ -167,6 +177,7 @@ class Shard extends EventEmitter {
 
 					case "GUILD_MEMBER_CHUNK": {
 						packet.d.members.forEach(member => {
+							member.guild_id = packet.d.guild_id;
 							this.cacheSocket.send("member", cacheConverter.member(member));
 						});
 
