@@ -9,8 +9,7 @@ class CacheSocket {
 
 	start(proto) {
 		this.proto = proto;
-		console.log(`tcp://cache-socket-zmq-proxy:${process.env.GATEWAY_CACHE_ZMQ_PROXY_SERVICE_PORT_PULL}`);
-		this.socket.connect(`tcp://cache-socket-zmq-proxy:${process.env.GATEWAY_CACHE_ZMQ_PROXY_SERVICE_PORT_PULL}`);
+		this.socket.connect(`tcp://gateway-cache-zmq-proxy:${process.env.GATEWAY_CACHE_ZMQ_PROXY_SERVICE_PORT_PULL}`);
 	}
 
 	send(type, message) {
