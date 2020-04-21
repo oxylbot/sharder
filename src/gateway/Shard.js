@@ -208,7 +208,7 @@ class Shard extends EventEmitter {
 					case "MESSAGE_CREATE": {
 						if(packet.d.type === 0 && !packet.d.webhook_id && !packet.d.author.bot) {
 							this.messageSocket.send({
-								id:	packet.d.id,
+								id: packet.d.id,
 								channelId: packet.d.channel_id,
 								authorId: packet.d.author.id,
 								guildId: packet.d.guild_id,
@@ -360,13 +360,13 @@ class Shard extends EventEmitter {
 			op: constants.OPCODES.IDENTIFY,
 			d: {
 				token: this.token,
-				large_threshold: 50,
-				guild_subscriptions: false,
 				properties: {
 					$os: process.platform,
 					$browser: "oxyl-sharder",
 					$device: "oxyl-sharder"
 				},
+				compress: true,
+				large_threshold: 50,
 				shard: [this.id, this.shardCount],
 				presence: {
 					since: null,
@@ -376,7 +376,9 @@ class Shard extends EventEmitter {
 					},
 					status: "online",
 					afk: false
-				}
+				},
+				guild_subscriptions: false,
+				intents: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 7) | (1 << 9)
 			}
 		});
 	}
