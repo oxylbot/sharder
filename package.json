@@ -1,6 +1,6 @@
 {
   "name": "oxyl-sharder",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Sharding handler for Oxyl",
   "main": "src/index.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "zeromq": "^5.1.0"
   },
   "devDependencies": {
-    "eslint": "6.8.0",
+    "eslint": "7.0.0",
     "eslint-config-recommended": "4.0.0"
   }
 }
