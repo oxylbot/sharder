@@ -1,4 +1,3 @@
-const CacheSocket = require("./sockets/CacheSocket");
 const MessageSocket = require("./sockets/MessageSocket");
 const os = require("os");
 const path = require("path");
@@ -7,7 +6,6 @@ const Shard = require("./gateway/Shard");
 const superagent = require("superagent");
 
 const shards = new Map();
-const cacheSocket = new CacheSocket();
 const messageSocket = new MessageSocket();
 
 const orchestratorURL = `http://shard-orchestrator:${process.env.SHARD_ORCHESTRATOR_SERVICE_PORT}`;
@@ -33,10 +31,8 @@ async function getShards() {
 }
 
 async function init() {
-	const cacheProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "Cache.proto"));
 	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "DiscordMessage.proto"));
 
-	cacheSocket.start(cacheProto);
 	messageSocket.start(messageProto);
 
 	console.log("Getting shards");
@@ -49,7 +45,6 @@ async function init() {
 			shardID,
 			shardCount,
 			messageSocket,
-			cacheSocket,
 			token: process.env.TOKEN
 		});
 
@@ -75,7 +70,6 @@ process.on("unhandledRejection", err => {
 
 process.on("SIGTERM", () => {
 	messageSocket.close();
-	cacheSocket.close();
 	shards.forEach(shard => shard.close());
 
 	process.exit(0);

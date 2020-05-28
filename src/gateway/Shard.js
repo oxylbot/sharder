@@ -1,14 +1,10 @@
-const cacheConverter = require("./cacheConverter");
 const CompressionHandler = require("./CompressionHandler");
 const { GATEWAY: constants } = require("../constants");
 const EventEmitter = require("events");
-const superagent = require("superagent");
 const WebSocket = require("ws");
 
-const gatewayBaseURL = `http://gateway:${process.env.GATEWAY_SERVICE_PORT}`;
-
 class Shard extends EventEmitter {
-	constructor({ gatewayURL, shardID, shardCount, messageSocket, cacheSocket, token }) {
+	constructor({ gatewayURL, shardID, shardCount, messageSocket, token }) {
 		super();
 
 		gatewayURL += `?v=${constants.VERSION}&encoding=etf&compress=zlib-stream`;
@@ -18,7 +14,6 @@ class Shard extends EventEmitter {
 		this.id = shardID;
 		this.shardCount = shardCount;
 		this.messageSocket = messageSocket;
-		this.cacheSocket = cacheSocket;
 
 		this.reset();
 	}
@@ -29,7 +24,6 @@ class Shard extends EventEmitter {
 		this.user = reconnecting ? this.user : null;
 		this.status = reconnecting ? "resuming" : "disconnected";
 		this.messageQueue = [];
-		this.requestMembersQueue = [];
 
 		this.sessionID = reconnecting ? this.sessionID : null;
 		this.lastSequence = reconnecting ? this.lastSequence : null;
@@ -94,32 +88,10 @@ class Shard extends EventEmitter {
 	}
 
 	async emptyQueues() {
-		this.requestMembers(this.requestMembersQueue);
-		this.requestMembersQueue = [];
-
 		while(this.messageQueue.length) {
 			this.send(this.messageQueue.shift());
 			await new Promise(resolve => setTimeout(resolve, 500));
 		}
-	}
-
-	requestMembers(guildIDs) {
-		if(!Array.isArray(guildIDs)) guildIDs = [guildIDs];
-
-		if(this.status !== "ready") {
-			this.requestMembersQueue.push(...guildIDs);
-			return;
-		}
-
-		console.log("Requesting guild members for", guildIDs);
-		this.send({
-			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
-			d: {
-				guild_id: guildIDs,
-				query: "",
-				limit: 0
-			}
-		});
 	}
 
 	heartbeat() {
@@ -156,55 +128,6 @@ class Shard extends EventEmitter {
 						break;
 					}
 
-					case "GUILD_MEMBER_ADD": {
-						this.cacheSocket.send("member", cacheConverter.member(packet.d));
-
-						break;
-					}
-
-					case "GUILD_MEMBER_REMOVE": {
-						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.guild_id}` +
-							`/members/${packet.d.user.id}`);
-
-						break;
-					}
-
-					case "GUILD_MEMBER_UPDATE": {
-						this.cacheSocket.send("member", cacheConverter.member(packet.d));
-
-						break;
-					}
-
-					case "GUILD_MEMBERS_CHUNK": {
-						packet.d.members.forEach(member => {
-							member.guild_id = packet.d.guild_id;
-							this.cacheSocket.send("member", cacheConverter.member(member));
-						});
-
-						break;
-					}
-
-					case "GUILD_ROLE_CREATE": {
-						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cacheSocket.send("role", cacheConverter.role(role));
-
-						break;
-					}
-
-					case "GUILD_ROLE_UPDATE": {
-						const role = Object.assign(packet.d.role, { guild_id: packet.d.guild_id });
-						this.cacheSocket.send("role", cacheConverter.role(role));
-
-						break;
-					}
-
-					case "GUILD_ROLE_DELETE": {
-						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.guild_id}` +
-							`/roles/${packet.d.role.id}`);
-
-						break;
-					}
-
 					case "MESSAGE_CREATE": {
 						if(packet.d.type === 0 && !packet.d.webhook_id && !packet.d.author.bot) {
 							this.messageSocket.send({
@@ -215,12 +138,6 @@ class Shard extends EventEmitter {
 								content: packet.d.content
 							});
 						}
-
-						break;
-					}
-
-					case "USER_UPDATE": {
-						this.cacheSocket.send("user", cacheConverter.user(packet.d));
 
 						break;
 					}
@@ -239,54 +156,12 @@ class Shard extends EventEmitter {
 
 					case "GUILD_CREATE": {
 						console.log("DISPATCH: GUILD CREATE!");
-						if(packet.d.unavailable) return;
-
-						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
-						this.requestMembers(packet.d.id);
-
-						break;
-					}
-
-					case "GUILD_UPDATE": {
-						this.cacheSocket.send("guild", cacheConverter.guild(packet.d));
 
 						break;
 					}
 
 					case "GUILD_DELETE": {
 						console.log("DISPATCH: GUILD DELETE!");
-						if(packet.d.unavailable) return;
-						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.id}`);
-
-						break;
-					}
-
-					case "CHANNEL_DELETE": {
-						await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.guild_id}` +
-							`/channels/${packet.d.channel.id}`);
-
-						break;
-					}
-
-					case "CHANNEL_UPDATE": {
-						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
-
-						break;
-					}
-
-					case "CHANNEL_CREATE": {
-						this.cacheSocket.send("channel", cacheConverter.channel(packet.d));
-
-						break;
-					}
-
-					case "VOICE_STATE_UPDATE": {
-						if(!packet.d.channel_id) {
-							await superagent.delete(`${gatewayBaseURL}/guilds/${packet.d.guild_id}` +
-								`/voicestates/${packet.d.user_id}`);
-						} else {
-							this.cacheSocket.send("voiceState", cacheConverter.voiceState(packet.d));
-						}
 
 						break;
 					}
@@ -378,7 +253,7 @@ class Shard extends EventEmitter {
 					afk: false
 				},
 				guild_subscriptions: false,
-				intents: (1 << 0) | (1 << 1) | (1 << 2) | (1 << 7) | (1 << 9)
+				intents: (1 << 0) | (1 << 2) | (1 << 9)
 			}
 		});
 	}
