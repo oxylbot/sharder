@@ -1,8 +1,8 @@
-const zmq = require("zeromq");
+const { Push } = require("zeromq");
 
 class MessageSocket {
 	constructor() {
-		this.socket = zmq.socket("push");
+		this.socket = new Push();
 
 		this.proto = null;
 	}
@@ -12,7 +12,7 @@ class MessageSocket {
 		this.socket.connect(`tcp://sharder-messages-zmq-proxy:${process.env.SHARDER_MESSAGES_ZMQ_PROXY_SERVICE_PORT_PULL}`);
 	}
 
-	send(message) {
+	async send(message) {
 		const messageProto = this.proto.lookup("Message");
 
 		const verifyError = messageProto.verify(message);
@@ -21,7 +21,7 @@ class MessageSocket {
 			throw new Error(verifyError);
 		}
 
-		this.socket.send(messageProto.encode(message).finish());
+		await this.socket.send(messageProto.encode(message).finish());
 	}
 
 	close() {

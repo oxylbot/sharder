@@ -24,6 +24,7 @@ class Shard extends EventEmitter {
 		this.user = reconnecting ? this.user : null;
 		this.status = reconnecting ? "resuming" : "disconnected";
 		this.messageQueue = [];
+		this.requestMembersCallbacks = new Map();
 
 		this.sessionID = reconnecting ? this.sessionID : null;
 		this.lastSequence = reconnecting ? this.lastSequence : null;
@@ -94,6 +95,30 @@ class Shard extends EventEmitter {
 		}
 	}
 
+	async requestMembers(guildId, { query, userIds }) {
+		const nonce = (Date.now() + process.hrtime().reduce((a, b) => a + b)).toString(36);
+		const d = {
+			guild_id: guildId,
+			nonce
+		};
+
+		if(query) {
+			d.limit = 5;
+			d.query = query;
+		} else if(userIds) {
+			d.user_ids = userIds;
+		}
+
+		this.send({
+			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
+			d
+		});
+
+		return await new Promise(resolve => {
+			this.requestMembersCallbacks.set(nonce, data => resolve(data));
+		});
+	}
+
 	heartbeat() {
 		console.log("Sending heartbeat");
 		this.lastSentHeartbeat = Date.now();
@@ -137,6 +162,18 @@ class Shard extends EventEmitter {
 								guildId: packet.d.guild_id,
 								content: packet.d.content
 							});
+						}
+
+						break;
+					}
+
+					case "GUILD_MEMBERS_CHUNK": {
+						if(!packet.d.nonce) {
+							console.warn("Received member chunk with no nonce");
+						} else if(!this.requestMembersCallbacks.has(packet.d.nonce)) {
+							console.warn("Received member chunk with no callback");
+						} else {
+							this.requestMembersCalbacks.get(packet.d.nonce)(packet.d);
 						}
 
 						break;
@@ -210,7 +247,7 @@ class Shard extends EventEmitter {
 			}
 
 			default: {
-				console.log("Unknown OP:", packet);
+				console.log("Unknown OPcode:", packet);
 				break;
 			}
 		}

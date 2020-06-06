@@ -2,6 +2,7 @@ const MessageSocket = require("./sockets/MessageSocket");
 const os = require("os");
 const path = require("path");
 const protobuf = require("protobufjs");
+const rest = require("./rest");
 const Shard = require("./gateway/Shard");
 const superagent = require("superagent");
 
@@ -57,15 +58,14 @@ async function init() {
 		await new Promise(resolve => setTimeout(resolve, 5500));
 	}
 
-	await superagent.put(`${orchestratorURL}/finished`);
-	console.log("PUT /finished");
+	rest(shards, shardCount);
 }
 
 init();
 
 process.on("unhandledRejection", err => {
 	console.error(err.stack);
-	// process.exit(1);
+	process.exit(1);
 });
 
 process.on("SIGTERM", () => {
