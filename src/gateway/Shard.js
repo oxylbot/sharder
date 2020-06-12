@@ -114,8 +114,12 @@ class Shard extends EventEmitter {
 			d
 		});
 
+		console.log("Requesting members", d);
 		return await new Promise(resolve => {
-			this.requestMembersCallbacks.set(nonce, data => resolve(data));
+			this.requestMembersCallbacks.set(nonce, data => {
+				resolve(data);
+				this.requestMembersCallbacks.delete(nonce);
+			});
 		});
 	}
 
@@ -168,6 +172,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBERS_CHUNK": {
+						console.log("Guild member chunk", packet.d);
 						if(!packet.d.nonce) {
 							console.warn("Received member chunk with no nonce");
 						} else if(!this.requestMembersCallbacks.has(packet.d.nonce)) {
