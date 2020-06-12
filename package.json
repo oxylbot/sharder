@@ -1,6 +1,6 @@
 {
   "name": "oxyl-sharder",
-  "version": "4.0.0",
+  "version": "7.0.0",
   "description": "Sharding handler for Oxyl",
   "main": "src/index.js",
   "scripts": {
@@ -25,9 +25,9 @@
   "dependencies": {
     "erlpack": "^0.1.3",
     "express": "^4.17.1",
-    "protobufjs": "^6.8.8",
-    "superagent": "^5.0.2",
-    "ws": "^7.0.0",
+    "protobufjs": "^6.9.0",
+    "superagent": "^5.2.2",
+    "ws": "^7.3.0",
     "zeromq": "^6.0.0-beta.6"
   },
   "devDependencies": {
