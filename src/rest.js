@@ -23,7 +23,7 @@ app.get("/request-guild-members", async (req, res) => {
 	return res.status(200).json(data.members);
 });
 
-app.listen(process.env[`${os.hostname().toUpperCase()}_SERVICE_PORT`]);
+app.listen(process.env[`${os.hostname().toUpperCase().replace("-", "_")}_SERVICE_PORT`]);
 
 module.exports = (shards, shardCount) => {
 	app.locals.shards = shards;
