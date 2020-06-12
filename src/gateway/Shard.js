@@ -114,7 +114,6 @@ class Shard extends EventEmitter {
 			d
 		});
 
-		console.log("Requesting members", d);
 		return await new Promise(resolve => {
 			this.requestMembersCallbacks.set(nonce, data => {
 				resolve(data);
@@ -172,13 +171,12 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBERS_CHUNK": {
-						console.log("Guild member chunk", packet.d);
 						if(!packet.d.nonce) {
 							console.warn("Received member chunk with no nonce");
 						} else if(!this.requestMembersCallbacks.has(packet.d.nonce)) {
 							console.warn("Received member chunk with no callback");
 						} else {
-							this.requestMembersCalbacks.get(packet.d.nonce)(packet.d);
+							this.requestMembersCallbacks.get(packet.d.nonce)(packet.d);
 						}
 
 						break;
@@ -259,7 +257,7 @@ class Shard extends EventEmitter {
 	}
 
 	resume() {
-		console.log("resuming the session");
+		console.log("Resuming session");
 		this.status = "resuming";
 		this.send({
 			op: constants.OPCODES.RESUME,
@@ -272,7 +270,7 @@ class Shard extends EventEmitter {
 	}
 
 	identify() {
-		console.log("identifying to gateway");
+		console.log("Identifying");
 		this.send({
 			op: constants.OPCODES.IDENTIFY,
 			d: {
