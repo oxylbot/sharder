@@ -18,7 +18,7 @@ app.get("/request-guild-members", async (req, res) => {
 	else options.userIds = Array.isArray(req.query.userIds) ? req.query.userIds : [req.query.userIds];
 
 	const data = await shard.requestMembers(req.query.id, options);
-	if(data.not_found) return res.status(400).json({ error: "Invalid ID" });
+	if(data.not_found && data.not_found.length) return res.status(400).json({ error: "Invalid ID" });
 
 	return res.status(200).json(data.members);
 });
