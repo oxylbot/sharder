@@ -16,10 +16,7 @@ class MessageSocket {
 		const messageProto = this.proto.lookup("Message");
 
 		const verifyError = messageProto.verify(message);
-		if(verifyError) {
-			console.log("Invalid message:", message);
-			throw new Error(verifyError);
-		}
+		if(verifyError) throw new Error(verifyError);
 
 		await this.socket.send(messageProto.encode(message).finish());
 	}

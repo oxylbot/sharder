@@ -1,6 +1,7 @@
 const CompressionHandler = require("./CompressionHandler");
 const { GATEWAY: constants } = require("../constants");
 const EventEmitter = require("events");
+const logger = require("../logger");
 const WebSocket = require("ws");
 
 class Shard extends EventEmitter {
@@ -19,7 +20,7 @@ class Shard extends EventEmitter {
 	}
 
 	reset(reconnecting = false) {
-		console.log("Resetting shard, reconnect:", reconnecting);
+		logger.info(`Resetting shard, reconnect: ${reconnecting}`, { shard: this });
 		this.latency = 0;
 		this.user = reconnecting ? this.user : null;
 		this.status = reconnecting ? "resuming" : "disconnected";
@@ -43,9 +44,9 @@ class Shard extends EventEmitter {
 	}
 
 	createWebsocket() {
-		console.log("Creating websocket");
-		this.ws = new WebSocket(this.url);
+		logger.info(`Creating websocket to ${this.url}`, { shard: this });
 
+		this.ws = new WebSocket(this.url);
 		this.ws.on("message", this.compressionHandler.push.bind(this.compressionHandler));
 		this.ws.on("close", (code, reason) => {
 			const [reconnect, errorMessage] = {
@@ -63,7 +64,10 @@ class Shard extends EventEmitter {
 			}[code] || [true, "Unknown error"];
 
 
-			console.log("Websocket closed, reconnect:", reconnect, "error message:", errorMessage);
+			logger.info(`Websocket closed, reconnect: ${reconnect}`, {
+				shard: this,
+				errorMessage
+			});
 
 			if(code === 4007) this.lastSequence = null;
 			if([4007, 4009].includes(code)) this.sessionID = null;
@@ -109,6 +113,7 @@ class Shard extends EventEmitter {
 			d.user_ids = userIds;
 		}
 
+		logger.verbose(`Requesting guild members`, { d });
 		this.send({
 			op: constants.OPCODES.REQUEST_GUILD_MEMBERS,
 			d
@@ -123,7 +128,7 @@ class Shard extends EventEmitter {
 	}
 
 	heartbeat() {
-		console.log("Sending heartbeat");
+		logger.info("Sending heartbeat", { shard: this });
 		this.lastSentHeartbeat = Date.now();
 
 		this.send({
@@ -133,11 +138,16 @@ class Shard extends EventEmitter {
 	}
 
 	async packet(packet) {
+		logger.debug(`Received packet`, {
+			shard: this,
+			packet
+		});
+
 		switch(packet.op) {
 			case constants.OPCODES.DISPATCH: {
 				switch(packet.t) {
 					case "RESUMED": {
-						console.log("DISPATCH: Resumed!");
+						logger.info("DISPATCH: resumed", { shard: this });
 						this.status = "ready";
 						this.emptyQueues();
 
@@ -145,7 +155,7 @@ class Shard extends EventEmitter {
 					}
 
 					case "READY": {
-						console.log("DISPATCH: READY!");
+						logger.info("DISPATCH: ready", { shard: this });
 						this.emit("ready");
 
 						this.status = "ready";
@@ -171,10 +181,15 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_MEMBERS_CHUNK": {
+						logger.verbose("Recieved member chunk", {
+							shard: this,
+							d: packet.d
+						});
+
 						if(!packet.d.nonce) {
-							console.warn("Received member chunk with no nonce");
+							logger.warn("Received member chunk with no nonce", { shard: this });
 						} else if(!this.requestMembersCallbacks.has(packet.d.nonce)) {
-							console.warn("Received member chunk with no callback");
+							logger.warn("Received member chunk with no callback", { shard: this });
 						} else {
 							this.requestMembersCallbacks.get(packet.d.nonce)(packet.d);
 						}
@@ -195,13 +210,13 @@ class Shard extends EventEmitter {
 					}
 
 					case "GUILD_CREATE": {
-						console.log("DISPATCH: GUILD CREATE!");
+						logger.info("DISPATCH: guild create", { shard: this });
 
 						break;
 					}
 
 					case "GUILD_DELETE": {
-						console.log("DISPATCH: GUILD DELETE!");
+						logger.info("DISPATCH: guild delete", { shard: this });
 
 						break;
 					}
@@ -211,7 +226,7 @@ class Shard extends EventEmitter {
 			}
 
 			case constants.OPCODES.HELLO: {
-				console.log("HELLO: heartbeat interval", packet.d.heartbeat_interval);
+				logger.info(`HELLO: interval ${packet.d.heartbeat_interval}ms`, { shard: this });
 				if(this.heartbeatInterval) clearInterval(this.heartbeatInterval);
 				this.heartbeatInterval = setInterval(() => this.heartbeat(), packet.d.heartbeat_interval);
 
@@ -223,7 +238,7 @@ class Shard extends EventEmitter {
 			}
 
 			case constants.OPCODES.INVALID_SESSION: {
-				console.log("INVALID SESSION: reidentifying");
+				logger.info(`INVALID SESSION: reidentifying`, { shard: this });
 				this.lastSequence = 0;
 				this.sessionID = null;
 
@@ -232,32 +247,32 @@ class Shard extends EventEmitter {
 			}
 
 			case constants.OPCODES.HEARTBEAT: {
-				console.log("HEARTBEAT: heartbeat manually requested");
+				logger.info(`HEARTBEAT: heartbeat manually requested`, { shard: this });
 				this.heartbeat();
 				break;
 			}
 
 			case constants.OPCODES.RECONNECT: {
-				console.log("RECONNECT: resetting with reconnect");
+				logger.info(`RECONNECT: resetting with reconnect`, { shard: this });
 				this.reset(true);
 				break;
 			}
 
 			case constants.OPCODES.HEARTBEAT_ACK: {
-				console.log("HEARTBEAT ACK: heartbeat was acknowledged");
 				this.latency = Date.now() - this.lastSentHeartbeat;
+				logger.info(`HEARTBEAT ACK: heartbeat was acknowledged (${this.latency}ms)`, { shard: this });
 				break;
 			}
 
 			default: {
-				console.log("Unknown OPcode:", packet);
+				logger.warn(`Unknown OPcode`, { shard: this });
 				break;
 			}
 		}
 	}
 
 	resume() {
-		console.log("Resuming session");
+		logger.info(`Resuming session`, { shard: this });
 		this.status = "resuming";
 		this.send({
 			op: constants.OPCODES.RESUME,
@@ -270,7 +285,7 @@ class Shard extends EventEmitter {
 	}
 
 	identify() {
-		console.log("Identifying");
+		logger.info(`Identifying`, { shard: this });
 		this.send({
 			op: constants.OPCODES.IDENTIFY,
 			d: {

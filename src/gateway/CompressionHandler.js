@@ -1,5 +1,6 @@
 const erlpack = require("erlpack");
 const EventEmitter = require("events");
+const logger = require("../logger");
 const zlib = require("zlib");
 
 class CompressionHandler extends EventEmitter {
@@ -14,12 +15,15 @@ class CompressionHandler extends EventEmitter {
 		this.flushing = false;
 		this.queue = [];
 		this.chunks = [];
+
+		logger.info("Created a compression handler");
 	}
 
 	kill() {
 		this.unzip.close();
 		this.unzip.removeAllListeners();
 		this.removeAllListeners();
+		logger.info("Compression handler killed");
 	}
 
 	compress(data) {

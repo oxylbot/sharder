@@ -1,4 +1,6 @@
 const express = require("express");
+const expressWinston = require("express-winston");
+const logger = require("../logger");
 const os = require("os");
 
 const app = express();
@@ -9,6 +11,7 @@ app.disable("x-powered-by");
 app.set("env", process.env.NODE_ENV);
 
 app.use(express.json());
+app.use(expressWinston.logger({ winstonInstance: logger }));
 
 app.get("/request-guild-members", async (req, res) => {
 	const shard = req.app.locals.shards.get((req.query.id >> 22) % app.locals.shardCount);
@@ -23,7 +26,12 @@ app.get("/request-guild-members", async (req, res) => {
 	return res.status(200).json(data.members);
 });
 
-app.listen(process.env[`${os.hostname().toUpperCase().replace("-", "_")}_SERVICE_PORT`]);
+app.use(expressWinston.errorLogger({ winstonInstance: logger }));
+
+const port = process.env[`${os.hostname().toUpperCase().replace("-", "_")}_SERVICE_PORT`];
+app.listen(port, () => {
+	logger.info(`REST API listening on port ${port}`);
+});
 
 module.exports = (shards, shardCount) => {
 	app.locals.shards = shards;

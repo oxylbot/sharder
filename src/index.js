@@ -1,3 +1,4 @@
+const logger = require("./logger");
 const MessageSocket = require("./sockets/MessageSocket");
 const os = require("os");
 const path = require("path");
@@ -22,9 +23,11 @@ async function getShards() {
 			gatewayURL: body.url
 		};
 	} catch(error) {
+		logger.error("Recieved error while requesting shards", { error });
 		if(!error.response || (error.status && error.status >= 400 && error.status !== 429)) {
 			throw error;
 		} else {
+			logger.debug("Trying to get shards again ratelimit");
 			await new Promise(resolve => setTimeout(resolve, error.response.body.retry_at - Date.now()));
 			return await getShards();
 		}
@@ -35,12 +38,13 @@ async function init() {
 	const messageProto = await protobuf.load(path.resolve(__dirname, "..", "protobuf", "DiscordMessage.proto"));
 
 	messageSocket.start(messageProto);
+	logger.info("Loaded message prototype & started socket");
 
-	console.log("Getting shards");
 	const { shardCount, shardsToUse, gatewayURL } = await getShards();
+	logger.info("Recieved sharding info", { shardCount, shardsToUse, gatewayURL });
 
 	for(const shardID of shardsToUse) {
-		console.log("Creating shard", shardID);
+		logger.info(`Creating shard ${shardID}`);
 		const shard = new Shard({
 			gatewayURL,
 			shardID,
@@ -50,8 +54,8 @@ async function init() {
 		});
 
 		shard.on("disconnectError", error => {
-			console.error(`Shard ${shardID} disconnect with code ${error.code} with reason ${error.reason}\n` +
-						`Message: ${error.message}`);
+			logger.error(`Shard ${shardID} disconnect with code ${error.code} with reason ${error.reason}\n` +
+						`Message: ${error.message}`, { error });
 		});
 
 		shards.set(shardID, shard);
@@ -63,14 +67,15 @@ async function init() {
 
 init();
 
-process.on("unhandledRejection", err => {
-	console.error(err.stack);
+process.on("unhandledRejection", error => {
+	logger.error(error.stack, { error });
 	process.exit(1);
 });
 
 process.on("SIGTERM", () => {
 	messageSocket.close();
 	shards.forEach(shard => shard.close());
+	logger.info("Closing shards and message socket due to SIGTERM");
 
 	process.exit(0);
 });
