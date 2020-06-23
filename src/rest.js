@@ -1,6 +1,6 @@
 const express = require("express");
 const expressWinston = require("express-winston");
-const logger = require("../logger");
+const logger = require("./logger");
 const os = require("os");
 
 const app = express();
