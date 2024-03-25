@@ -24,7 +24,7 @@
   "homepage": "https://github.com/oxylbot/sharder#readme",
   "dependencies": {
     "erlpack": "^0.1.3",
-    "express": "^4.17.1",
+    "express": "^4.19.2",
     "express-winston": "^4.0.5",
     "protobufjs": "^6.10.2",
     "superagent": "^6.1.0",
