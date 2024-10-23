@@ -30,7 +30,7 @@
     "superagent": "^6.1.0",
     "winston": "^3.3.3",
     "ws": "^7.4.3",
-    "zeromq": "^6.0.0-beta.6"
+    "zeromq": "^6.1.1"
   },
   "devDependencies": {
     "eslint": "7.19.0",
